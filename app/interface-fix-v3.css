@@ -1,0 +1,8 @@
+@import "./interface-fix-v2.css";
+
+/* v3: keep the hamburger accessible independently of the scrolling header. */
+@media(max-width:620px){
+ .menu-button{position:fixed!important;top:12px!important;left:12px!important;z-index:60!important;display:grid!important;visibility:visible!important;opacity:1!important}
+ .side-panel{z-index:70!important}
+ .scrim{z-index:65!important}
+}
