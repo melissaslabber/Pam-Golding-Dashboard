@@ -1,7 +1,0 @@
-@import "./interface-fix.css";
-
-/* v2: navigation lives in the top-left hamburger drawer only. */
-@media(max-width:620px){
- .mobile-primary-nav{display:none!important}
- .content{padding-bottom:90px!important}
-}
