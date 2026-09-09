@@ -1,4 +1,5 @@
 "use client";
+export { default } from "./organizer-complete-v8";
 
 import "./application.css";
 import { FormEvent, useEffect, useState } from "react";
