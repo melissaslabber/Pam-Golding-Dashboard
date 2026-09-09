@@ -1,0 +1,49 @@
+.application-success > img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.application-success small {
+  display: block;
+  max-width: 570px;
+  margin: 22px auto 0;
+  color: #687a74;
+  line-height: 1.55;
+}
+
+.application-recipient {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 520px;
+  margin: 24px auto;
+  padding: 18px;
+  border-radius: 12px;
+  background: #edf5f2;
+}
+
+.application-recipient span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.application-recipient strong {
+  font: 600 20px Georgia, serif;
+}
+
+.application-recipient a {
+  color: #08705a;
+  font-weight: 750;
+}
+
+.application-success .official-form {
+  display: block;
+  width: max-content;
+  margin: 16px auto 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
