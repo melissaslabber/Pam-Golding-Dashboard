@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qnggpboyiohwjltrvrqj.supabase.co";
-const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export const supabaseConfigured = Boolean(projectUrl && publishableKey);
 
@@ -38,4 +38,3 @@ export async function claimStaffAccess(code: string): Promise<SupabaseProfile> {
 export async function releaseStaffSession() {
   if (supabase) await supabase.auth.signOut();
 }
-
