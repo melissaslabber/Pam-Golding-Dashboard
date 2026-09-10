@@ -35,6 +35,16 @@ export async function claimStaffAccess(code: string): Promise<SupabaseProfile> {
   return profile as SupabaseProfile;
 }
 
+export async function restoreStaffAccess(): Promise<SupabaseProfile | null> {
+  if (!supabase) return null;
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) return null;
+  const { data, error } = await supabase.rpc("current_staff_profile");
+  if (error) throw error;
+  const profile = Array.isArray(data) ? data[0] : data;
+  return profile ? profile as SupabaseProfile : null;
+}
+
 export async function releaseStaffSession() {
   if (supabase) await supabase.auth.signOut();
 }
