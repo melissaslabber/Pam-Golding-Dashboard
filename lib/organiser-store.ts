@@ -73,3 +73,51 @@ export function subscribeToSharedRecords(onChange: () => void) {
     .subscribe();
   return () => { void client.removeChannel(channel); };
 }
+
+export type SharedNotification = {
+  id: number;
+  recipient_profile_id: string;
+  message: string;
+  section: string;
+  reminder_key?: string | null;
+  read: boolean;
+  created_at: string;
+};
+
+export async function loadMyNotifications() {
+  if (!supabase) return [] as SharedNotification[];
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id,recipient_profile_id,message,section,reminder_key,read,created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data || []) as SharedNotification[];
+}
+
+export async function createTeamNotifications(rows: Array<{recipientProfileId:string;teamId:string;message:string;section:string;reminderKey?:string}>) {
+  if (!supabase || !rows.length) return;
+  const { error } = await supabase.from("notifications").insert(rows.map(row => ({
+    recipient_profile_id: row.recipientProfileId,
+    team_id: row.teamId,
+    message: row.message,
+    section: row.section,
+    reminder_key: row.reminderKey || null,
+  })));
+  if (error && error.code !== "23505") throw error;
+}
+
+export async function markNotificationRead(id:number) {
+  if (!supabase) return;
+  const { error } = await supabase.from("notifications").update({ read:true }).eq("id", id);
+  if (error) throw error;
+}
+
+export function subscribeToMyNotifications(onChange: () => void) {
+  if (!supabase) return () => undefined;
+  const client = supabase;
+  const channel = client.channel("my-notifications")
+    .on("postgres_changes", { event:"*", schema:"public", table:"notifications" }, onChange)
+    .subscribe();
+  return () => { void client.removeChannel(channel); };
+}
