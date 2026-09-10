@@ -1,22 +1,16 @@
 import "../legal-pages.css";
 
-export const metadata = { title: "Privacy Policy | Pam Golding Rentals Organiser" };
+export const metadata = { title: "Pam Golding Rentals Organiser" };
 
-export default function PrivacyPolicy() {
+export default function About() {
   return <main className="legal-shell"><article className="legal-page">
     <header className="legal-brand"><img src="/pam-golding-gate.jpg" alt="Pam Golding Properties"/><div><strong>Pam Golding Rentals Organiser</strong><span>BOLAND · OVERBERG · CAPE REGION RENTALS</span></div></header>
-    <h1>Privacy Policy</h1><p className="legal-date">Effective date: 10 September 2026</p>
-    <p>This policy explains how the Pam Golding Rentals Organiser (“the App”) handles information when authorised rental team members use it. The App is an internal work-organising tool for managing appointments, tasks, maintenance matters, lease renewals, new leases and tenant-application workflows.</p>
-    <h2>Information we process</h2><ul><li>Staff profile details such as name, work email address, cellphone number, role and team assignment.</li><li>Operational information entered into the App, including tasks, property references, appointment details, maintenance updates, lease workflow information and notes.</li><li>Tenant-application information and documents supplied voluntarily through an application link.</li><li>Google Calendar event information when a user chooses to connect Google Calendar, including event titles, dates, times, locations, descriptions and meeting links.</li><li>Technical information required to keep a user signed in and operate the service securely.</li></ul>
-    <h2>How information is used</h2><p>Information is used only to provide the App’s functions, keep team information synchronised, display work assigned to authorised users, create reports, process tenant applications, and import, create, update or delete calendar events at the user’s request.</p>
-    <h2>Google Calendar data</h2><p>Google Calendar access is optional. The App requests calendar-event permission so it can display upcoming events and allow the user to create, edit and delete events from the App. Google access tokens are stored in an encrypted, secure, HTTP-only browser cookie and are not displayed to other users. Google user data is not sold, used for advertising or used to train general-purpose artificial-intelligence models.</p>
-    <p>The App’s use and transfer of information received from Google APIs complies with the Google API Services User Data Policy, including its Limited Use requirements.</p>
-    <h2>Storage and sharing</h2><p>Authorised operational data is stored using Supabase and is shared only with staff members who have access to the relevant team profile. Google Calendar information is retrieved from Google for the connected user. Information may be processed by service providers necessary to operate the App, such as Vercel, Supabase and Google. We do not sell personal information.</p>
-    <h2>Security and retention</h2><p>Reasonable technical and organisational safeguards are used to protect information. Access is restricted through staff access codes and team permissions. Information is retained only for as long as reasonably necessary for operational, contractual, legal or record-keeping purposes.</p>
-    <h2>Your choices and rights</h2><p>Users can disconnect Google Calendar from within the App. A user may also revoke the App’s access through their Google Account permissions. Requests to access, correct or delete personal information, or to delete an App account and associated data, may be sent to the contact address below. Some records may need to be retained where required by law or legitimate business record-keeping obligations.</p>
-    <h2>Tenant information</h2><p>Tenant applicants should submit only information requested for the rental application. Application information is made available to the relevant rental representative for evaluating and administering the application and is handled subject to applicable South African privacy law, including the Protection of Personal Information Act.</p>
-    <h2>Changes to this policy</h2><p>This policy may be updated when the App’s functionality or legal requirements change. The latest version will remain available at this address.</p>
-    <h2>Contact</h2><p>Privacy questions or requests can be sent to <a href="mailto:melissa.slabber@gmail.com">melissa.slabber@gmail.com</a>.</p>
-    <a className="legal-back" href="/">Return to the App</a>
+    <h1>Rental work, organised in one place</h1>
+    <p>The Pam Golding Rentals Organiser is a private workflow application for authorised rental staff. It brings daily appointments, tasks, property maintenance, lease renewals and new-lease compliance steps into one clear dashboard.</p>
+    <h2>What the App does</h2><ul><li>Displays today’s calendar, priority tasks and urgent rental workflows.</li><li>Tracks maintenance matters from first report through completion.</li><li>Guides lease renewals and new leases through their required action points.</li><li>Allows linked agents and assistants to work from the same operational profile.</li><li>Provides property-specific tenant-application links and workflow reporting.</li></ul>
+    <h2>Google Calendar integration</h2><p>Staff members may optionally connect their own Google Calendar. After a user grants permission, the App displays upcoming calendar events in that user’s dashboard and allows the user to create, edit or delete their own events from the App. The App requests only the Google Calendar event permission required for these features.</p>
+    <h2>Who may use it</h2><p>The operational dashboard is restricted to authorised staff using a manager-issued access code. This public information page is available without signing in so users can understand the App before granting Google access.</p>
+    <h2>Privacy and support</h2><p>Read the <a href="/privacy">Privacy Policy</a>, <a href="/terms">Terms of Service</a> and <a href="/data-deletion">Data Deletion Instructions</a>. Questions can be sent to <a href="mailto:melissa.slabber@gmail.com">melissa.slabber@gmail.com</a>.</p>
+    <a className="legal-back" href="/">Open the secure App</a>
   </article></main>;
 }
