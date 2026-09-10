@@ -38,3 +38,30 @@ export async function claimStaffAccess(code: string): Promise<SupabaseProfile> {
 export async function releaseStaffSession() {
   if (supabase) await supabase.auth.signOut();
 }
+
+export async function createStaffProfile(input: {
+  name: string;
+  shortName: string;
+  initials: string;
+  role: "manager" | "agent" | "assistant";
+  email: string;
+  cellphone: string;
+  accessCode: string;
+  teamId?: string;
+  newTeamName?: string;
+}) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data, error } = await supabase.rpc("manager_create_profile", {
+    person_name: input.name,
+    person_short_name: input.shortName,
+    person_initials: input.initials,
+    person_role: input.role,
+    person_email: input.email,
+    person_cellphone: input.cellphone,
+    person_access_code: input.accessCode,
+    target_team_id: input.teamId || null,
+    new_team_name: input.newTeamName || null,
+  });
+  if (error) throw error;
+  return data;
+}
