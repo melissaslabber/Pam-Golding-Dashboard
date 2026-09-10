@@ -82,6 +82,8 @@
 
 .user-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.user-card-actions button{width:100%;font-size:10px}.user-security-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:9px;padding-top:12px;border-top:1px solid #e3ebe8}.user-security-actions button{gap:7px}.user-security-actions svg{width:15px}.user-security-actions .dialog-delete{border-color:#e6c4ca!important;background:#fff8f9!important;color:#9b2b3d!important}.user-security-actions .dialog-delete:disabled{opacity:.45}.user-form>.login-error{grid-column:1/-1;margin:0}.spin{animation:manager-spin .8s linear infinite}@keyframes manager-spin{to{transform:rotate(360deg)}}@media(max-width:620px){.user-card-actions,.user-security-actions{grid-template-columns:1fr}.user-card-actions button{min-height:40px;font-size:11px}}
 
+.notification-wrap>.icon-button{position:relative}.notification-wrap>.icon-button>b{position:absolute;top:3px;right:3px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border:2px solid #fff;border-radius:10px;background:#a92338;color:#fff;font-size:8px;line-height:1}.notification-panel{max-height:min(520px,calc(100dvh - 150px));overflow-y:auto;overscroll-behavior:contain}.notification-panel>button.unread{background:#e8f4ef}.notification-panel>button.unread b{font-weight:800}
+
 /* Permanent mobile safe-frame rule: every dialog stays inside the visible area. */
 @media(max-width:620px){
  [data-slot="dialog-overlay"]{z-index:1000!important}
