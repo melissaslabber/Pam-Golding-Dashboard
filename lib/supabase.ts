@@ -65,3 +65,26 @@ export async function createStaffProfile(input: {
   if (error) throw error;
   return data;
 }
+
+export async function updateStaffProfile(input: { profileId:string; name:string; role:"manager"|"agent"|"assistant"; email:string; cellphone:string; teamId?:string; separate?:boolean }) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data, error } = await supabase.rpc("manager_update_profile", {
+    target_profile_id: input.profileId, person_name: input.name, person_role: input.role,
+    person_email: input.email, person_cellphone: input.cellphone,
+    destination_team_id: input.teamId || null, create_separate_team: Boolean(input.separate),
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function deactivateStaffProfile(profileId:string) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { error } = await supabase.rpc("manager_set_profile_active", { target_profile_id:profileId, enabled:false });
+  if (error) throw error;
+}
+
+export async function resetStaffAccessCode(profileId:string, newAccessCode:string) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { error } = await supabase.rpc("manager_reset_access_code", { target_profile_id:profileId, new_access_code:newAccessCode });
+  if (error) throw error;
+}
