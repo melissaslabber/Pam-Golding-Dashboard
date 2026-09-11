@@ -357,6 +357,7 @@ function SignaturePad({
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
   const start = (event: PointerEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
     drawing.current = true;
     event.currentTarget.setPointerCapture(event.pointerId);
     const context = event.currentTarget.getContext("2d"),
@@ -366,6 +367,7 @@ function SignaturePad({
   };
   const move = (event: PointerEvent<HTMLCanvasElement>) => {
     if (!drawing.current) return;
+    event.preventDefault();
     const context = event.currentTarget.getContext("2d"),
       p = point(event);
     context?.lineTo(p.x, p.y);
@@ -373,7 +375,10 @@ function SignaturePad({
   };
   const finish = (event: PointerEvent<HTMLCanvasElement>) => {
     if (!drawing.current) return;
+    event.preventDefault();
     drawing.current = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
     onChange(event.currentTarget.toDataURL("image/png"));
   };
   const clear = () => {
@@ -390,6 +395,7 @@ function SignaturePad({
       <p>Use your finger or stylus to sign inside the box.</p>
       <canvas
         ref={canvas}
+        aria-label="Draw your signature here"
         onPointerDown={start}
         onPointerMove={move}
         onPointerUp={finish}
