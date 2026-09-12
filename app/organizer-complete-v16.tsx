@@ -3977,6 +3977,7 @@ function CalendarView({
       new Date(today.getFullYear(), today.getMonth(), 1),
     ),
     [selectedDate, setSelectedDate] = useState(dateKey(0)),
+    swipeStartX = useRef<number | null>(null),
     monthStart = new Date(month.getFullYear(), month.getMonth(), 1),
     gridStart = new Date(monthStart),
     holidays = southAfricanPublicHolidays(month.getFullYear());
@@ -4003,7 +4004,19 @@ function CalendarView({
   };
   return (
     <div className="month-calendar-layout">
-      <section className="month-calendar-card">
+      <section
+        className="month-calendar-card"
+        onTouchStart={(event) => {
+          swipeStartX.current = event.touches[0]?.clientX ?? null;
+        }}
+        onTouchEnd={(event) => {
+          if (swipeStartX.current === null) return;
+          const distance =
+            event.changedTouches[0].clientX - swipeStartX.current;
+          if (Math.abs(distance) > 55) moveMonth(distance < 0 ? 1 : -1);
+          swipeStartX.current = null;
+        }}
+      >
         <header className="month-calendar-head">
           <button onClick={() => moveMonth(-1)} aria-label="Previous month">
             <ChevronLeft />
@@ -4037,9 +4050,11 @@ function CalendarView({
         <div className="month-grid">
           {calendarDays.map((day) => {
             const key = day.toLocaleDateString("en-CA"),
-              events = appointments.filter(
-                (item: Appointment) => appointmentDate(item) === key,
-              ),
+              events = appointments
+                .filter((item: Appointment) => appointmentDate(item) === key)
+                .sort((a: Appointment, b: Appointment) =>
+                  a.time.localeCompare(b.time),
+                ),
               holiday = southAfricanPublicHolidays(day.getFullYear()).get(key);
             return (
               <button
@@ -4049,7 +4064,16 @@ function CalendarView({
               >
                 <strong>{day.getDate()}</strong>
                 {holiday && <small>{holiday}</small>}
-                {events.length > 0 && <b>{events.length}</b>}
+                {events.length > 0 && (
+                  <span className="calendar-day-events">
+                    {events.map((event: Appointment) => (
+                      <em key={event.id}>
+                        <time>{event.time}</time>
+                        {event.title}
+                      </em>
+                    ))}
+                  </span>
+                )}
               </button>
             );
           })}

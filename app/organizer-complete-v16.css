@@ -2702,6 +2702,47 @@
   color: #fff;
   font-size: 8px;
 }
+.calendar-day-events {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.calendar-day-events em {
+  display: block;
+  overflow: hidden;
+  padding: 3px 4px;
+  border-left: 3px solid #08705a;
+  border-radius: 3px;
+  background: #e9f4f0;
+  color: #23483e;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 750;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.calendar-day-events time {
+  margin-right: 3px;
+  color: #08705a;
+  font-size: 6px;
+  font-weight: 900;
+}
+.month-calendar-card {
+  touch-action: pan-y;
+}
+.month-calendar-head h2:after {
+  content: "Swipe to change month";
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.62);
+  font:
+    700 7px Inter,
+    Arial,
+    sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 .selected-day-card {
   align-self: start;
 }
@@ -2800,7 +2841,7 @@
     padding-right: 4px;
   }
   .month-grid > button {
-    min-height: 62px;
+    min-height: 74px;
     padding: 6px 4px;
   }
   .month-grid > button > small {
@@ -2813,6 +2854,18 @@
     min-width: 15px;
     height: 15px;
     font-size: 7px;
+  }
+  .calendar-day-events {
+    gap: 2px;
+  }
+  .calendar-day-events em {
+    padding: 2px 3px;
+    font-size: 6px;
+  }
+  .calendar-day-events time {
+    display: block;
+    margin: 0;
+    font-size: 5px;
   }
   .selected-day-card > header {
     align-items: flex-start;
