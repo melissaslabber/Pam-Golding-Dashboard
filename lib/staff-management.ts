@@ -11,6 +11,7 @@ export type PortfolioMonth = {
 
 export type StaffManagementRecord = {
   profileId: string;
+  region: string;
   office: string;
   managerProfileId: string;
   strengths: string;
