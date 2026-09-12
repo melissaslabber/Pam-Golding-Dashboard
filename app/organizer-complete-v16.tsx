@@ -1447,7 +1447,7 @@ export default function Home() {
     );
   const isManager = view === "manager";
   return (
-    <main className="app-shell" data-release="assistant-no-portfolio-stats-v29">
+    <main className="app-shell" data-release="portfolio-growth-and-procurement-v31">
       <style>{`@media(max-width:620px){.workspace>header{display:flex!important;position:sticky!important;top:0!important;z-index:30!important;height:70px!important;padding:0 13px!important;background:#fff!important}.header-logo{display:block!important;width:38px!important;height:38px!important;object-fit:cover!important;border-radius:9px!important}.mobile-primary-nav{position:fixed!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;z-index:999!important;background:#fff!important;border-top:1px solid #d4e4de!important;padding:5px 5px calc(6px + env(safe-area-inset-bottom))!important}.content{padding-bottom:110px!important}}`}</style>
       <aside className={`side-panel ${mobileNav ? "side-open" : ""}`}>
         <div className="brand">
@@ -5757,10 +5757,18 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
     [month, setMonth] = useState({
       month: dateKey(0).slice(0, 7),
       newProperties: 0,
+      introNewProperties: 0,
+      managedNewProperties: 0,
       newTenantLeases: 0,
+      introNewTenantLeases: 0,
+      managedNewTenantLeases: 0,
       leaseRenewals: 0,
+      introRenewals: 0,
+      managedRenewals: 0,
       totalLeases: 0,
       totalLeaseValue: 0,
+      currentPortfolioProperties: 0,
+      currentPortfolioLeaseValue: 0,
     }),
     [saving, setSaving] = useState(false),
     [message, setMessage] = useState("");
@@ -5786,6 +5794,7 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       (item) =>
         item.month >= reportingPeriodStart && item.month <= reportingPeriodEnd,
     ),
+    latestReportingMonth = yearMonths[0],
     currentQuarter = Math.floor((Number(month.month.slice(5, 7)) - 1) / 3),
     quarterMonths = yearMonths.filter(
       (item) =>
@@ -5819,17 +5828,43 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       existing
         ? {
             ...existing,
+            introNewProperties: existing.introNewProperties ?? 0,
+            managedNewProperties:
+              existing.managedNewProperties ?? existing.newProperties ?? 0,
             newTenantLeases:
               existing.newTenantLeases ?? existing.totalLeases ?? 0,
+            introNewTenantLeases: existing.introNewTenantLeases ?? 0,
+            managedNewTenantLeases:
+              existing.managedNewTenantLeases ??
+              existing.newTenantLeases ??
+              existing.totalLeases ??
+              0,
             leaseRenewals: existing.leaseRenewals ?? 0,
+            introRenewals: existing.introRenewals ?? 0,
+            managedRenewals:
+              existing.managedRenewals ?? existing.leaseRenewals ?? 0,
+            currentPortfolioProperties:
+              existing.currentPortfolioProperties ?? 0,
+            currentPortfolioLeaseValue:
+              existing.currentPortfolioLeaseValue ??
+              existing.totalLeaseValue ??
+              0,
           }
         : {
         month: selectedMonth,
         newProperties: 0,
+        introNewProperties: 0,
+        managedNewProperties: 0,
         newTenantLeases: 0,
+        introNewTenantLeases: 0,
+        managedNewTenantLeases: 0,
         leaseRenewals: 0,
+        introRenewals: 0,
+        managedRenewals: 0,
         totalLeases: 0,
         totalLeaseValue: 0,
+        currentPortfolioProperties: 0,
+        currentPortfolioLeaseValue: 0,
           },
     );
     setMessage("");
@@ -5841,13 +5876,27 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       );
       return;
     }
-    const monthlyTotalLeases =
-      Number(month.newTenantLeases || 0) + Number(month.leaseRenewals || 0);
+    const newProperties =
+        Number(month.introNewProperties || 0) +
+        Number(month.managedNewProperties || 0),
+      newTenantLeases =
+        Number(month.introNewTenantLeases || 0) +
+        Number(month.managedNewTenantLeases || 0),
+      leaseRenewals =
+        Number(month.introRenewals || 0) +
+        Number(month.managedRenewals || 0),
+      monthlyTotalLeases = newTenantLeases + leaseRenewals;
     const next = {
       ...draft,
       months: [
         ...draft.months.filter((item) => item.month !== month.month),
-        { ...month, totalLeases: monthlyTotalLeases },
+        {
+          ...month,
+          newProperties,
+          newTenantLeases,
+          leaseRenewals,
+          totalLeases: monthlyTotalLeases,
+        },
       ],
     };
     void save(next);
@@ -5989,40 +6038,95 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
           </small>
         </label>
         <label>
-          Number of new properties
+          Intro new properties
           <input
             type="number"
             min="0"
-            value={month.newProperties}
+            value={month.introNewProperties}
             onChange={(e) =>
-              setMonth({ ...month, newProperties: Number(e.target.value) })
+              setMonth({ ...month, introNewProperties: Number(e.target.value) })
             }
           />
         </label>
         <label>
-          New-tenant leases completed
+          Managed new properties
           <input
             type="number"
             min="0"
-            value={month.newTenantLeases || 0}
+            value={month.managedNewProperties}
             onChange={(e) =>
-              setMonth({ ...month, newTenantLeases: Number(e.target.value) })
+              setMonth({ ...month, managedNewProperties: Number(e.target.value) })
             }
           />
         </label>
         <label>
-          Lease renewals completed
+          Intro new-tenant leases
           <input
             type="number"
             min="0"
-            value={month.leaseRenewals || 0}
+            value={month.introNewTenantLeases}
             onChange={(e) =>
-              setMonth({ ...month, leaseRenewals: Number(e.target.value) })
+              setMonth({ ...month, introNewTenantLeases: Number(e.target.value) })
             }
           />
-          <small>
-            Total leases this month: {Number(month.newTenantLeases || 0) + Number(month.leaseRenewals || 0)}
-          </small>
+        </label>
+        <label>
+          Managed new-tenant leases
+          <input
+            type="number"
+            min="0"
+            value={month.managedNewTenantLeases}
+            onChange={(e) =>
+              setMonth({ ...month, managedNewTenantLeases: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Intro renewals
+          <input
+            type="number"
+            min="0"
+            value={month.introRenewals}
+            onChange={(e) =>
+              setMonth({ ...month, introRenewals: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Managed renewals
+          <input
+            type="number"
+            min="0"
+            value={month.managedRenewals}
+            onChange={(e) =>
+              setMonth({ ...month, managedRenewals: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Current managed portfolio
+          <input
+            type="number"
+            min="0"
+            value={month.currentPortfolioProperties}
+            onChange={(e) =>
+              setMonth({ ...month, currentPortfolioProperties: Number(e.target.value) })
+            }
+          />
+          <small>Total properties currently managed.</small>
+        </label>
+        <label>
+          Current portfolio lease value (R)
+          <input
+            type="number"
+            min="0"
+            step="100"
+            value={month.currentPortfolioLeaseValue}
+            onChange={(e) =>
+              setMonth({ ...month, currentPortfolioLeaseValue: Number(e.target.value) })
+            }
+          />
+          <small>Total monthly rental value of the managed portfolio.</small>
         </label>
         <label>
           Total lease value for this month (R)
@@ -6052,24 +6156,22 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
         <div className="portfolio-summary-grid portfolio-comparison-row">
         <article>
           <small>FEBRUARY 2025 BASELINE</small>
-          <strong>{february2025?.newProperties || 0} new properties</strong>
+          <strong>{february2025?.currentPortfolioProperties || 0} units</strong>
           <span>
-            {february2025?.totalLeases || 0} total leases ·{" "}
-            {currency(february2025?.totalLeaseValue || 0)}
+            {currency(february2025?.currentPortfolioLeaseValue || 0)} portfolio lease value
           </span>
         </article>
         <article>
           <small>FEBRUARY 2026 TOTAL</small>
-          <strong>{february2026?.newProperties || 0} new properties</strong>
+          <strong>{february2026?.currentPortfolioProperties || 0} units</strong>
           <span>
-            {february2026?.totalLeases || 0} total leases ·{" "}
-            {currency(february2026?.totalLeaseValue || 0)}
+            {currency(february2026?.currentPortfolioLeaseValue || 0)} portfolio lease value
           </span>
         </article>
         <article
           className={
-            (february2026?.newProperties || 0) -
-              (february2025?.newProperties || 0) <
+            (february2026?.currentPortfolioProperties || 0) -
+              (february2025?.currentPortfolioProperties || 0) <
             0
               ? "negative"
               : "positive"
@@ -6077,15 +6179,26 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
         >
           <small>PORTFOLIO GROWTH / LOSS</small>
           <strong>
-            {(february2026?.newProperties || 0) -
-              (february2025?.newProperties || 0) >
+            {(february2026?.currentPortfolioProperties || 0) -
+              (february2025?.currentPortfolioProperties || 0) >
             0
               ? "+"
               : ""}
-            {(february2026?.newProperties || 0) -
-              (february2025?.newProperties || 0)}
+            {(february2026?.currentPortfolioProperties || 0) -
+              (february2025?.currentPortfolioProperties || 0)} units
           </strong>
-          <span>change in new properties recorded</span>
+          <span>
+            Lease value{" "}
+            {(february2026?.currentPortfolioLeaseValue || 0) -
+              (february2025?.currentPortfolioLeaseValue || 0) >
+            0
+              ? "+"
+              : ""}
+            {currency(
+              (february2026?.currentPortfolioLeaseValue || 0) -
+                (february2025?.currentPortfolioLeaseValue || 0),
+            )}
+          </span>
         </article>
         </div>
       </div>
@@ -6096,7 +6209,12 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
         </div>
         <div className="portfolio-summary-grid portfolio-ytd-row">
         <article>
-          <small>NEW PROPERTIES</small>
+          <small>LEASES CURRENTLY MANAGED</small>
+          <strong>{latestReportingMonth?.currentPortfolioProperties || 0}</strong>
+          <span>current portfolio units at the latest monthly check-in</span>
+        </article>
+        <article>
+          <small>TOTAL NEW PROPERTIES</small>
           <strong>
             {yearMonths.reduce(
               (sum, item) => sum + (item.newProperties || 0),
@@ -6104,6 +6222,19 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
             )}
           </strong>
           <span>brand-new properties added this year</span>
+        </article>
+        <article>
+          <small>TOTAL INTRO LEASES</small>
+          <strong>
+            {yearMonths.reduce(
+              (sum, item) =>
+                sum +
+                (item.introNewTenantLeases || 0) +
+                (item.introRenewals || 0),
+              0,
+            )}
+          </strong>
+          <span>Intro new-tenant leases and renewals</span>
         </article>
         <article>
           <small>TOTAL LEASES COMPLETED</small>
@@ -6114,18 +6245,6 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
             )}
           </strong>
           <span>renewals and new-tenant leases this year</span>
-        </article>
-        <article>
-          <small>TOTAL LEASE VALUE</small>
-          <strong>
-            {currency(
-              yearMonths.reduce(
-                (sum, item) => sum + (item.totalLeaseValue || 0),
-                0,
-              ),
-            )}
-          </strong>
-          <span>combined lease value for {reportingYearLabel}</span>
         </article>
         </div>
       </div>
