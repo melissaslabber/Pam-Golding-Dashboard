@@ -1,2 +1,2 @@
-// Pam Golding Rentals Dashboard V35 — self-contained task-status access
-export { default } from "./organizer-complete-v35";
+// Pam Golding Rentals Dashboard V36 — staff privacy and sharing
+export { default } from "./organizer-complete-v36";
