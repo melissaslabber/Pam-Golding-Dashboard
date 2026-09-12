@@ -596,6 +596,11 @@ export default function Home() {
       .then(setStaffManagement)
       .catch((error) => console.error("Staff management load failed", error));
   }, [ready, current?.profileId, current?.role]);
+  useEffect(() => {
+    if (current && current.role !== "Manager" && view === "manager") {
+      setView("personal");
+    }
+  }, [current?.role, view]);
   useSharedCollection("task", tasks, current, users);
   useSharedCollection("appointment", appointments, current, users);
   useSharedCollection("maintenance", maintenance, current, users);
@@ -1546,16 +1551,18 @@ export default function Home() {
             >
               My profile
             </button>
-            <button
-              className={isManager ? "selected" : ""}
-              onClick={() => {
-                setView("manager");
-                setActive("Team");
-              }}
-            >
-              <ShieldCheck />
-              Manager
-            </button>
+            {current.role === "Manager" && (
+              <button
+                className={isManager ? "selected" : ""}
+                onClick={() => {
+                  setView("manager");
+                  setActive("Team");
+                }}
+              >
+                <ShieldCheck />
+                Manager
+              </button>
+            )}
           </div>
           {current.role !== "Manager" && (
             <div className="notification-wrap">
@@ -5094,6 +5101,7 @@ function TeamView({
           Add user
         </Button>
       </div>
+      <ManagerPortfolioInsights users={users} records={staffManagement} />
       <div className="people-grid">
         {users.map((u: User) => (
           <article key={u.name}>
@@ -5305,11 +5313,104 @@ function TeamView({
     </>
   );
 }
+function ManagerPortfolioInsights({ users, records }: any) {
+  const [profileId, setProfileId] = useState("all"),
+    selectedRecords: StaffManagementRecord[] =
+      profileId === "all"
+        ? records
+        : records.filter(
+            (record: StaffManagementRecord) => record.profileId === profileId,
+          ),
+    latestRows = selectedRecords
+      .map((record) => ({
+        record,
+        month: [...record.months].sort((a, b) =>
+          b.month.localeCompare(a.month),
+        )[0],
+      }))
+      .filter((item) => item.month),
+    properties = latestRows.reduce(
+      (sum, item) => sum + item.month.activeProperties,
+      0,
+    ),
+    gained = latestRows.reduce((sum, item) => sum + item.month.gained, 0),
+    lost = latestRows.reduce((sum, item) => sum + item.month.lost, 0),
+    leases = latestRows.reduce((sum, item) => sum + item.month.newLeases, 0),
+    gross = latestRows.reduce((sum, item) => sum + item.month.grossValue, 0),
+    declining = latestRows
+      .filter((item) => item.month.lost > item.month.gained)
+      .map(
+        (item) =>
+          users.find((user: User) => user.profileId === item.record.profileId)
+            ?.name,
+      )
+      .filter(Boolean),
+    insight = !latestRows.length
+      ? "Add monthly figures to staff profiles to generate portfolio insights."
+      : declining.length
+        ? `${declining.join(", ")} ${declining.length === 1 ? "has" : "have"} negative net growth. Review landlord losses, retention activity and prospecting targets.`
+        : leases === 0
+          ? "Portfolio retention is stable, but no new leases were recorded. Review lead generation and conversion activity."
+          : `The selected portfolio has positive net growth of ${gained - lost}. Continue the strongest acquisition activities and monitor retention monthly.`;
+  const currency = new Intl.NumberFormat("en-ZA", {
+    style: "currency",
+    currency: "ZAR",
+    maximumFractionDigits: 0,
+  });
+  return (
+    <section className="manager-insights-panel">
+      <header>
+        <div>
+          <span>AI PORTFOLIO INSIGHTS</span>
+          <h2>Growth and coaching overview</h2>
+        </div>
+        <select
+          value={profileId}
+          onChange={(event) => setProfileId(event.target.value)}
+        >
+          <option value="all">All staff</option>
+          {users
+            .filter((user: User) => user.role !== "Assistant" && user.profileId)
+            .map((user: User) => (
+              <option key={user.profileId} value={user.profileId}>
+                {user.name}
+              </option>
+            ))}
+        </select>
+      </header>
+      <div className="manager-insight-stats">
+        <article>
+          <strong>{properties}</strong>
+          <span>Active properties</span>
+        </article>
+        <article className={gained - lost < 0 ? "negative" : ""}>
+          <strong>
+            {gained - lost > 0 ? "+" : ""}
+            {gained - lost}
+          </strong>
+          <span>Net growth</span>
+        </article>
+        <article>
+          <strong>{leases}</strong>
+          <span>New leases</span>
+        </article>
+        <article>
+          <strong>{currency.format(gross)}</strong>
+          <span>Gross portfolio value</span>
+        </article>
+      </div>
+      <div className="manager-ai-advice">
+        <Sparkles />
+        <p>{insight}</p>
+      </div>
+    </section>
+  );
+}
 function StaffPerformancePanel({ user, users, record, onSave }: any) {
   const emptyRecord: StaffManagementRecord = {
       profileId: user.profileId,
       office: "",
-      managerProfileId: "",
+      managerProfileId: "arno-and-melissa",
       strengths: "",
       developmentAreas: "",
       issues: "",
@@ -5410,24 +5511,10 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
         </label>
         <label>
           Reports to
-          <select
-            value={draft.managerProfileId}
-            onChange={(e) =>
-              setDraft({ ...draft, managerProfileId: e.target.value })
-            }
-          >
-            <option value="">Choose manager</option>
-            {users
-              .filter((item: User) => item.role === "Manager")
-              .map((item: User) => (
-                <option
-                  key={item.profileId || item.name}
-                  value={item.profileId || item.name}
-                >
-                  {item.name}
-                </option>
-              ))}
-          </select>
+          <div className="reports-to-value">
+            <Users aria-hidden="true" />
+            <span>Arno de Wit and Melissa Slabber</span>
+          </div>
         </label>
       </div>
       <div className="staff-coaching-grid">
