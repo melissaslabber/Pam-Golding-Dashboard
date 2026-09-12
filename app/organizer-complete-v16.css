@@ -2767,6 +2767,64 @@
   background: #eaf5f0;
   color: #075846;
 }
+.calendar-day-dialog {
+  width: min(560px, calc(100vw - 24px)) !important;
+}
+.calendar-day-dialog .public-holiday-label {
+  margin: 0;
+}
+.calendar-day-dialog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+.calendar-day-dialog-actions button {
+  width: 100%;
+  min-height: 44px;
+  gap: 7px;
+}
+.calendar-day-dialog-actions button svg {
+  width: 16px;
+}
+.calendar-day-dialog-events {
+  overflow: hidden;
+  border: 1px solid #e1e9e6;
+  border-radius: 12px;
+  background: #fff;
+}
+.calendar-day-dialog-events h3 {
+  margin: 0;
+  padding: 12px 15px;
+  border-bottom: 1px solid #e7eeeb;
+  background: #f5f9f7;
+  color: #173d33;
+  font:
+    700 16px Georgia,
+    serif;
+}
+.calendar-day-dialog-events .meeting {
+  border-bottom: 1px solid #edf1ef;
+}
+.calendar-day-dialog-events .meeting:last-child {
+  border-bottom: 0;
+}
+.calendar-day-dialog-events > .no-events {
+  padding: 22px 15px;
+}
+@media (max-width: 620px) {
+  .calendar-day-dialog-actions {
+    grid-template-columns: 1fr;
+  }
+  .calendar-day-dialog-actions button {
+    font-size: 11px !important;
+  }
+  .calendar-day-dialog-actions .add-button {
+    font-size: 11px !important;
+  }
+  .calendar-day-dialog-actions .add-button svg {
+    margin: 0 !important;
+  }
+}
 .month-calendar-card {
   touch-action: pan-y;
 }

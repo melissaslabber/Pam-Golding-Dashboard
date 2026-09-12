@@ -1707,6 +1707,18 @@ export default function Home() {
                 addAppointment={addAppointment}
                 showTrigger={active === "Appointments"}
               />
+              {active === "Appointments" && (
+                <span className="hidden-task-trigger">
+                  <TaskDialog
+                    dialog={dialog}
+                    setDialog={setDialog}
+                    form={form}
+                    setForm={setForm}
+                    addTask={addTask}
+                    users={linkedUsers}
+                  />
+                </span>
+              )}
             </div>
           </div>
           {active === "Today" && (
@@ -1743,6 +1755,10 @@ export default function Home() {
                   if (date) setAppointmentForm((form) => ({ ...form, date }));
                   setAppointmentOpen(true);
                 },
+                openTask: (date?: string) => {
+                  if (date) setForm((form) => ({ ...form, due: date }));
+                  setDialog(true);
+                },
               }}
             />
           )}
@@ -1772,6 +1788,10 @@ export default function Home() {
                 openAdd: (date?: string) => {
                   if (date) setAppointmentForm((form) => ({ ...form, date }));
                   setAppointmentOpen(true);
+                },
+                openTask: (date?: string) => {
+                  if (date) setForm((form) => ({ ...form, due: date }));
+                  setDialog(true);
                 },
               }}
             />
@@ -4061,6 +4081,7 @@ function CalendarView({
       new Date(today.getFullYear(), today.getMonth(), 1),
     ),
     [selectedDate, setSelectedDate] = useState(dateKey(0)),
+    [dayOpen, setDayOpen] = useState(false),
     swipeStartX = useRef<number | null>(null),
     monthStart = new Date(month.getFullYear(), month.getMonth(), 1),
     gridStart = new Date(monthStart),
@@ -4080,7 +4101,9 @@ function CalendarView({
     dayAppointments = appointments
       .filter((item: Appointment) => appointmentDate(item) === selectedDate)
       .sort((a: Appointment, b: Appointment) => a.time.localeCompare(b.time)),
-    selectedHoliday = holidays.get(selectedDate);
+    selectedHoliday = southAfricanPublicHolidays(
+      Number(selectedDate.slice(0, 4)),
+    ).get(selectedDate);
   const moveMonth = (offset: number) => {
     const next = new Date(month.getFullYear(), month.getMonth() + offset, 1);
     setMonth(next);
@@ -4146,7 +4169,7 @@ function CalendarView({
                 className={`${day.getMonth() !== month.getMonth() ? "outside" : ""} ${key === dateKey(0) ? "today" : ""} ${key === selectedDate ? "selected" : ""} ${holiday ? "holiday" : ""}`}
                 onClick={() => {
                   setSelectedDate(key);
-                  calendarControls.openAdd(key);
+                  setDayOpen(true);
                 }}
               >
                 <strong>{day.getDate()}</strong>
@@ -4205,6 +4228,59 @@ function CalendarView({
             : "Google appointments sync automatically every five minutes."}
         </p>
       </section>
+      <Dialog open={dayOpen} onOpenChange={setDayOpen}>
+        <DialogContent className="task-dialog calendar-day-dialog">
+          <DialogHeader>
+            <DialogTitle>{dateLabel(selectedDate)}</DialogTitle>
+            <DialogDescription>
+              {formatDate(selectedDate)} · View the day or add something new.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedHoliday && (
+            <p className="public-holiday-label">
+              <CalendarDays /> South African public holiday · {selectedHoliday}
+            </p>
+          )}
+          <div className="calendar-day-dialog-actions">
+            <Button
+              className="add-button"
+              onClick={() => {
+                setDayOpen(false);
+                calendarControls.openAdd(selectedDate);
+              }}
+            >
+              <CalendarDays /> Add meeting / appointment
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDayOpen(false);
+                calendarControls.openTask(selectedDate);
+              }}
+            >
+              <ListTodo /> Add task for this day
+            </Button>
+          </div>
+          <div className="calendar-day-dialog-events">
+            <h3>Schedule</h3>
+            {dayAppointments.length ? (
+              dayAppointments.map((appointment: Appointment) => (
+                <Meeting
+                  key={appointment.id}
+                  appointment={appointment}
+                  onEdit={(item: Appointment) => {
+                    setDayOpen(false);
+                    onEdit(item);
+                  }}
+                  onDelete={onDelete}
+                />
+              ))
+            ) : (
+              <p className="no-events">Nothing scheduled for this day yet.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
