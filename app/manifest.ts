@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Pam Golding Rentals Organiser",
-    short_name: "Pam Golding Rentals",
+    name: "RENTALS DASHBOARD",
+    short_name: "RENTALS DASHBOARD",
     description: "Tasks, reminders, team accountability and rental calendars in one place.",
     start_url: "/",
     display: "standalone",
