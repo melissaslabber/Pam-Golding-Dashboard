@@ -2,11 +2,9 @@ import { supabase } from "./supabase";
 
 export type PortfolioMonth = {
   month: string;
-  activeProperties: number;
-  gained: number;
-  lost: number;
-  newLeases: number;
-  grossValue: number;
+  newProperties: number;
+  leaseRenewals: number;
+  totalLeaseValue: number;
 };
 
 export type StaffManagementRecord = {
