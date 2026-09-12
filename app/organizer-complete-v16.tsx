@@ -6026,8 +6026,8 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
             February 2026 comparison
           </button>
         </div>
-        <label>
-          Month being captured
+        <label className="portfolio-month-field">
+          Month
           <input
             type="month"
             value={month.month}
@@ -6037,72 +6037,94 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
             Use March 2026, April 2026 and every month going forward.
           </small>
         </label>
-        <label>
-          Intro new properties
-          <input
-            type="number"
-            min="0"
-            value={month.introNewProperties}
-            onChange={(e) =>
-              setMonth({ ...month, introNewProperties: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Managed new properties
-          <input
-            type="number"
-            min="0"
-            value={month.managedNewProperties}
-            onChange={(e) =>
-              setMonth({ ...month, managedNewProperties: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Intro new-tenant leases
-          <input
-            type="number"
-            min="0"
-            value={month.introNewTenantLeases}
-            onChange={(e) =>
-              setMonth({ ...month, introNewTenantLeases: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Managed new-tenant leases
-          <input
-            type="number"
-            min="0"
-            value={month.managedNewTenantLeases}
-            onChange={(e) =>
-              setMonth({ ...month, managedNewTenantLeases: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Intro renewals
-          <input
-            type="number"
-            min="0"
-            value={month.introRenewals}
-            onChange={(e) =>
-              setMonth({ ...month, introRenewals: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Managed renewals
-          <input
-            type="number"
-            min="0"
-            value={month.managedRenewals}
-            onChange={(e) =>
-              setMonth({ ...month, managedRenewals: Number(e.target.value) })
-            }
-          />
-        </label>
+        <div className="monthly-reporting-table">
+          <div className="monthly-reporting-head">
+            <strong>Monthly reporting</strong>
+            <span>Intro</span>
+            <span>Managed</span>
+          </div>
+          <div className="monthly-reporting-row">
+            <strong>New properties</strong>
+            <label>
+              <span>Intro new properties</span>
+              <input
+                aria-label="Intro new properties"
+                type="number"
+                min="0"
+                value={month.introNewProperties}
+                onChange={(e) =>
+                  setMonth({ ...month, introNewProperties: Number(e.target.value) })
+                }
+              />
+            </label>
+            <label>
+              <span>Managed new properties</span>
+              <input
+                aria-label="Managed new properties"
+                type="number"
+                min="0"
+                value={month.managedNewProperties}
+                onChange={(e) =>
+                  setMonth({ ...month, managedNewProperties: Number(e.target.value) })
+                }
+              />
+            </label>
+          </div>
+          <div className="monthly-reporting-row">
+            <strong>New tenant leases</strong>
+            <label>
+              <span>Intro new tenant leases</span>
+              <input
+                aria-label="Intro new tenant leases"
+                type="number"
+                min="0"
+                value={month.introNewTenantLeases}
+                onChange={(e) =>
+                  setMonth({ ...month, introNewTenantLeases: Number(e.target.value) })
+                }
+              />
+            </label>
+            <label>
+              <span>Managed new tenant leases</span>
+              <input
+                aria-label="Managed new tenant leases"
+                type="number"
+                min="0"
+                value={month.managedNewTenantLeases}
+                onChange={(e) =>
+                  setMonth({ ...month, managedNewTenantLeases: Number(e.target.value) })
+                }
+              />
+            </label>
+          </div>
+          <div className="monthly-reporting-row">
+            <strong>Renewals</strong>
+            <label>
+              <span>Intro renewals</span>
+              <input
+                aria-label="Intro renewals"
+                type="number"
+                min="0"
+                value={month.introRenewals}
+                onChange={(e) =>
+                  setMonth({ ...month, introRenewals: Number(e.target.value) })
+                }
+              />
+            </label>
+            <label>
+              <span>Managed renewals</span>
+              <input
+                aria-label="Managed renewals"
+                type="number"
+                min="0"
+                value={month.managedRenewals}
+                onChange={(e) =>
+                  setMonth({ ...month, managedRenewals: Number(e.target.value) })
+                }
+              />
+            </label>
+          </div>
+        </div>
         <label>
           Current managed portfolio
           <input
@@ -6128,8 +6150,8 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
           />
           <small>Total monthly rental value of the managed portfolio.</small>
         </label>
-        <label>
-          Total lease value for this month (R)
+        <label className="monthly-total-lease-value">
+          Total combined lease value for this month (R)
           <input
             type="number"
             min="0"
@@ -6139,6 +6161,9 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
               setMonth({ ...month, totalLeaseValue: Number(e.target.value) })
             }
           />
+          <small>
+            Include all Intro and Managed new properties, new tenant leases and renewals.
+          </small>
         </label>
         <Button
           className="add-button"

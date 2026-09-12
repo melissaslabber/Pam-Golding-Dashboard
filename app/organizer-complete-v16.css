@@ -3303,6 +3303,61 @@
 .portfolio-entry > .add-button {
   width: 100%;
 }
+.portfolio-month-field {
+  grid-column: 1 / -1;
+  max-width: 360px;
+}
+.monthly-reporting-table {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  border: 1px solid #c9dcd5;
+  border-radius: 11px;
+  background: #fff;
+}
+.monthly-reporting-head,
+.monthly-reporting-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.4fr) repeat(2, minmax(100px, 1fr));
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.monthly-reporting-head {
+  background: #e6f1ed;
+  color: #17483b;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.monthly-reporting-head span {
+  text-align: center;
+}
+.monthly-reporting-row + .monthly-reporting-row {
+  border-top: 1px solid #e1ebe7;
+}
+.monthly-reporting-row > strong {
+  color: #234c41;
+  font-size: 11px;
+}
+.monthly-reporting-row label span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.monthly-reporting-row label input {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+}
+.monthly-total-lease-value {
+  grid-column: 1 / -1;
+  padding: 12px;
+  border: 1px solid #b7d2c8;
+  border-radius: 10px;
+  background: #e9f4f0;
+}
 .portfolio-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3467,6 +3522,21 @@
   }
   .portfolio-entry > .add-button {
     grid-column: 1/-1;
+  }
+  .portfolio-month-field {
+    max-width: none;
+  }
+  .monthly-reporting-head,
+  .monthly-reporting-row {
+    grid-template-columns: minmax(105px, 1.25fr) repeat(2, minmax(72px, 1fr));
+    gap: 7px;
+    padding: 9px 8px;
+  }
+  .monthly-reporting-head {
+    font-size: 8px;
+  }
+  .monthly-reporting-row > strong {
+    font-size: 9px;
   }
   .portfolio-summary-grid {
     grid-template-columns: 1fr 1fr;
