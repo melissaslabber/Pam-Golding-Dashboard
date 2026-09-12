@@ -70,6 +70,11 @@ import {
   type RecordKind,
 } from "@/lib/organiser-store";
 import TenantApplicationPortal from "./tenant-application";
+import {
+  loadStaffManagementRecords,
+  saveStaffManagementRecord,
+  type StaffManagementRecord,
+} from "@/lib/staff-management";
 
 type Priority = "Urgent" | "High" | "Normal" | "Low";
 type View = "personal" | "manager";
@@ -374,6 +379,9 @@ export default function Home() {
     newLeasesEmail: "",
   });
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [staffManagement, setStaffManagement] = useState<
+    StaffManagementRecord[]
+  >([]);
   const [form, setForm] = useState({
     title: "",
     property: "",
@@ -582,6 +590,12 @@ export default function Home() {
     if (!ready) return;
     localStorage.setItem("pg-report-settings", JSON.stringify(reportSettings));
   }, [reportSettings, ready]);
+  useEffect(() => {
+    if (!ready || current?.role !== "Manager" || !supabaseConfigured) return;
+    loadStaffManagementRecords()
+      .then(setStaffManagement)
+      .catch((error) => console.error("Staff management load failed", error));
+  }, [ready, current?.profileId, current?.role]);
   useSharedCollection("task", tasks, current, users);
   useSharedCollection("appointment", appointments, current, users);
   useSharedCollection("maintenance", maintenance, current, users);
@@ -1866,6 +1880,8 @@ export default function Home() {
               tasks={tasks}
               setTasks={setTasks}
               onTaskStatus={handleTaskStatus}
+              staffManagement={staffManagement}
+              setStaffManagement={setStaffManagement}
             />
           )}
           {active === "Properties" && (
@@ -4846,6 +4862,8 @@ function TeamView({
   tasks,
   setTasks,
   onTaskStatus,
+  staffManagement,
+  setStaffManagement,
 }: any) {
   const [selected, setSelected] = useState<User | null>(null),
     [managing, setManaging] = useState<User | null>(null),
@@ -5025,6 +5043,23 @@ function TeamView({
             </article>
           </div>
         </section>
+        {selected.profileId && (
+          <StaffPerformancePanel
+            user={selected}
+            users={users}
+            record={staffManagement.find(
+              (item: StaffManagementRecord) =>
+                item.profileId === selected.profileId,
+            )}
+            onSave={async (record: StaffManagementRecord) => {
+              setStaffManagement((all: StaffManagementRecord[]) => [
+                ...all.filter((item) => item.profileId !== record.profileId),
+                record,
+              ]);
+              await saveStaffManagementRecord(record);
+            }}
+          />
+        )}
         <section className="task-panel standalone">
           <div className="panel-heading">
             <div>
@@ -5268,6 +5303,324 @@ function TeamView({
         current={current}
       />
     </>
+  );
+}
+function StaffPerformancePanel({ user, users, record, onSave }: any) {
+  const emptyRecord: StaffManagementRecord = {
+      profileId: user.profileId,
+      office: "",
+      managerProfileId: "",
+      strengths: "",
+      developmentAreas: "",
+      issues: "",
+      coachingPlan: "",
+      months: [],
+    },
+    [draft, setDraft] = useState<StaffManagementRecord>(record || emptyRecord),
+    [month, setMonth] = useState({
+      month: dateKey(0).slice(0, 7),
+      activeProperties: 0,
+      gained: 0,
+      lost: 0,
+      newLeases: 0,
+      grossValue: 0,
+    }),
+    [saving, setSaving] = useState(false),
+    [message, setMessage] = useState("");
+  useEffect(() => {
+    setDraft(record || { ...emptyRecord, profileId: user.profileId });
+  }, [user.profileId, record?.updatedAt]);
+  const months = [...draft.months].sort((a, b) =>
+      b.month.localeCompare(a.month),
+    ),
+    latest = months[0],
+    previous = months[1],
+    currentYear = month.month.slice(0, 4),
+    yearMonths = months.filter((item) => item.month.startsWith(currentYear)),
+    currentQuarter = Math.floor((Number(month.month.slice(5, 7)) - 1) / 3),
+    quarterMonths = yearMonths.filter(
+      (item) =>
+        Math.floor((Number(item.month.slice(5, 7)) - 1) / 3) === currentQuarter,
+    ),
+    netGrowth = latest ? latest.gained - latest.lost : 0,
+    advice = !latest
+      ? "Add the first monthly portfolio record to generate coaching guidance."
+      : latest.lost > latest.gained
+        ? "Prioritise landlord retention calls and review every lost-property reason with this staff member."
+        : latest.newLeases === 0
+          ? "The portfolio is stable, but new leasing activity needs attention. Set weekly prospecting and landlord-contact targets."
+          : netGrowth > 0
+            ? "Positive portfolio growth. Identify the strongest lead source and repeat it consistently next month."
+            : "Portfolio is steady. Focus the coaching plan on converting new mandates while protecting current landlords.";
+  const save = async (next = draft) => {
+    setSaving(true);
+    setMessage("");
+    try {
+      await onSave(next);
+      setDraft(next);
+      setMessage("Manager record saved securely.");
+    } catch (error: any) {
+      setMessage(error?.message || "The manager record could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const saveMonth = () => {
+    const next = {
+      ...draft,
+      months: [
+        ...draft.months.filter((item) => item.month !== month.month),
+        month,
+      ],
+    };
+    void save(next);
+  };
+  const currency = (value: number) =>
+    new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+      maximumFractionDigits: 0,
+    }).format(value || 0);
+  return (
+    <section className="staff-performance-panel">
+      <header>
+        <div>
+          <span>MANAGER ONLY</span>
+          <h2>Staff performance and portfolio</h2>
+          <p>
+            Private coaching information and manually confirmed monthly figures.
+          </p>
+        </div>
+        <Button
+          className="add-button"
+          disabled={saving}
+          onClick={() => void save()}
+        >
+          {saving ? "Saving…" : "Save manager notes"}
+        </Button>
+      </header>
+      <div className="staff-assignment-grid">
+        <label>
+          Office
+          <input
+            value={draft.office}
+            onChange={(e) => setDraft({ ...draft, office: e.target.value })}
+            placeholder="e.g. Paarl"
+          />
+        </label>
+        <label>
+          Reports to
+          <select
+            value={draft.managerProfileId}
+            onChange={(e) =>
+              setDraft({ ...draft, managerProfileId: e.target.value })
+            }
+          >
+            <option value="">Choose manager</option>
+            {users
+              .filter((item: User) => item.role === "Manager")
+              .map((item: User) => (
+                <option
+                  key={item.profileId || item.name}
+                  value={item.profileId || item.name}
+                >
+                  {item.name}
+                </option>
+              ))}
+          </select>
+        </label>
+      </div>
+      <div className="staff-coaching-grid">
+        <label>
+          Strengths
+          <textarea
+            value={draft.strengths}
+            onChange={(e) => setDraft({ ...draft, strengths: e.target.value })}
+            placeholder="Record strengths and positive performance..."
+          />
+        </label>
+        <label>
+          Development areas
+          <textarea
+            value={draft.developmentAreas}
+            onChange={(e) =>
+              setDraft({ ...draft, developmentAreas: e.target.value })
+            }
+            placeholder="Skills or behaviours to develop..."
+          />
+        </label>
+        <label>
+          Issues experienced
+          <textarea
+            value={draft.issues}
+            onChange={(e) => setDraft({ ...draft, issues: e.target.value })}
+            placeholder="Record the issue, date and action taken..."
+          />
+        </label>
+        <label>
+          Coaching plan
+          <textarea
+            value={draft.coachingPlan}
+            onChange={(e) =>
+              setDraft({ ...draft, coachingPlan: e.target.value })
+            }
+            placeholder="Agreed actions, support and follow-up date..."
+          />
+        </label>
+      </div>
+      <div className="portfolio-entry">
+        <div>
+          <span>MONTHLY PORTFOLIO RECORD</span>
+          <h3>Enter confirmed figures</h3>
+        </div>
+        <label>
+          Month
+          <input
+            type="month"
+            value={month.month}
+            onChange={(e) => setMonth({ ...month, month: e.target.value })}
+          />
+        </label>
+        <label>
+          Active properties
+          <input
+            type="number"
+            min="0"
+            value={month.activeProperties}
+            onChange={(e) =>
+              setMonth({ ...month, activeProperties: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Properties gained
+          <input
+            type="number"
+            min="0"
+            value={month.gained}
+            onChange={(e) =>
+              setMonth({ ...month, gained: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Properties lost
+          <input
+            type="number"
+            min="0"
+            value={month.lost}
+            onChange={(e) =>
+              setMonth({ ...month, lost: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          New leases concluded
+          <input
+            type="number"
+            min="0"
+            value={month.newLeases}
+            onChange={(e) =>
+              setMonth({ ...month, newLeases: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Gross portfolio value (R)
+          <input
+            type="number"
+            min="0"
+            step="100"
+            value={month.grossValue}
+            onChange={(e) =>
+              setMonth({ ...month, grossValue: Number(e.target.value) })
+            }
+          />
+        </label>
+        <Button
+          className="add-button"
+          disabled={!month.month || saving}
+          onClick={saveMonth}
+        >
+          Save monthly figures
+        </Button>
+      </div>
+      <div className="portfolio-summary-grid">
+        <article>
+          <small>LATEST PORTFOLIO</small>
+          <strong>{latest?.activeProperties || 0}</strong>
+          <span>{latest?.month || "No month recorded"}</span>
+        </article>
+        <article className={netGrowth < 0 ? "negative" : "positive"}>
+          <small>NET MONTHLY GROWTH</small>
+          <strong>
+            {netGrowth > 0 ? "+" : ""}
+            {netGrowth}
+          </strong>
+          <span>
+            {latest
+              ? `${latest.gained} gained · ${latest.lost} lost`
+              : "No figures yet"}
+          </span>
+        </article>
+        <article>
+          <small>GROSS PORTFOLIO VALUE</small>
+          <strong>{currency(latest?.grossValue || 0)}</strong>
+          <span>
+            {latest?.activeProperties
+              ? `${currency(latest.grossValue / latest.activeProperties)} average/property`
+              : "Awaiting figures"}
+          </span>
+        </article>
+        <article>
+          <small>CURRENT QUARTER</small>
+          <strong>
+            {quarterMonths.reduce((sum, item) => sum + item.newLeases, 0)}
+          </strong>
+          <span>new leases concluded</span>
+        </article>
+        <article>
+          <small>CURRENT YEAR</small>
+          <strong>
+            {yearMonths.reduce((sum, item) => sum + item.gained, 0)}
+          </strong>
+          <span>properties gained</span>
+        </article>
+        <article>
+          <small>MONTH-ON-MONTH</small>
+          <strong>
+            {latest && previous
+              ? latest.activeProperties - previous.activeProperties
+              : 0}
+          </strong>
+          <span>change in active properties</span>
+        </article>
+      </div>
+      <div className="manager-advice">
+        <Sparkles />
+        <div>
+          <span>PORTFOLIO GROWTH GUIDANCE</span>
+          <p>{advice}</p>
+        </div>
+      </div>
+      {months.length > 0 && (
+        <div className="portfolio-history">
+          <h3>Monthly history</h3>
+          {months.map((item) => (
+            <article key={item.month}>
+              <strong>{item.month}</strong>
+              <span>{item.activeProperties} properties</span>
+              <span>
+                +{item.gained} / −{item.lost}
+              </span>
+              <span>{item.newLeases} leases</span>
+              <b>{currency(item.grossValue)}</b>
+            </article>
+          ))}
+        </div>
+      )}
+      {message && <p className="staff-save-message">{message}</p>}
+    </section>
   );
 }
 function UserManagementDialog({

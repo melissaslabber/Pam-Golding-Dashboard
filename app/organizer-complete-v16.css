@@ -2928,6 +2928,232 @@
     min-height: 35px !important;
   }
 }
+
+/* Manager-only staff performance and portfolio workspace. */
+.staff-performance-panel {
+  display: grid;
+  gap: 15px;
+  margin: 18px 0;
+  padding: 20px;
+  border: 1px solid #d8e5e0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(18, 65, 54, 0.06);
+}
+.staff-performance-panel > header {
+  position: static;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.staff-performance-panel > header span,
+.portfolio-entry > div span,
+.manager-advice span {
+  color: #08705a;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+.staff-performance-panel h2 {
+  margin: 4px 0;
+  color: #173d33;
+  font:
+    700 22px Georgia,
+    serif;
+}
+.staff-performance-panel header p {
+  margin: 0;
+  color: #71817c;
+  font-size: 10px;
+}
+.staff-assignment-grid,
+.staff-coaching-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.staff-performance-panel label {
+  color: #3e5a51;
+  font-size: 10px;
+  font-weight: 800;
+}
+.staff-performance-panel input,
+.staff-performance-panel select,
+.staff-performance-panel textarea {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding: 9px;
+  border: 1px solid #cfddd7;
+  border-radius: 8px;
+  background: #fff;
+  color: #173d33;
+  font: inherit;
+}
+.staff-performance-panel input,
+.staff-performance-panel select {
+  height: 39px;
+}
+.staff-performance-panel textarea {
+  height: 78px;
+  resize: vertical;
+}
+.portfolio-entry {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #cfe0da;
+  border-radius: 13px;
+  background: #f4f9f7;
+}
+.portfolio-entry > div {
+  grid-column: 1/-1;
+}
+.portfolio-entry h3 {
+  margin: 4px 0 0;
+  color: #173d33;
+  font:
+    700 17px Georgia,
+    serif;
+}
+.portfolio-entry > .add-button {
+  width: 100%;
+}
+.portfolio-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.portfolio-summary-grid article {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid #dfe8e4;
+  border-left: 4px solid #78aa99;
+  border-radius: 10px;
+  background: #fbfdfc;
+}
+.portfolio-summary-grid article.negative {
+  border-left-color: #d41435;
+  background: #fff7f8;
+}
+.portfolio-summary-grid article.positive {
+  border-left-color: #15936e;
+}
+.portfolio-summary-grid small {
+  color: #71817c;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+}
+.portfolio-summary-grid strong {
+  color: #173d33;
+  font:
+    700 21px Georgia,
+    serif;
+}
+.portfolio-summary-grid span {
+  color: #71817c;
+  font-size: 9px;
+}
+.manager-advice {
+  display: flex;
+  gap: 11px;
+  padding: 14px;
+  border-radius: 11px;
+  background: linear-gradient(120deg, #063f35, #08705a);
+  color: #fff;
+}
+.manager-advice > svg {
+  width: 21px;
+  color: #e4cd99;
+}
+.manager-advice p {
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.manager-advice span {
+  color: #e4cd99;
+}
+.portfolio-history {
+  overflow: hidden;
+  border: 1px solid #dfe8e4;
+  border-radius: 11px;
+}
+.portfolio-history h3 {
+  margin: 0;
+  padding: 12px 14px;
+  background: #f4f8f6;
+  color: #173d33;
+  font:
+    700 16px Georgia,
+    serif;
+}
+.portfolio-history article {
+  display: grid;
+  grid-template-columns: 90px repeat(3, 1fr) auto;
+  gap: 9px;
+  padding: 10px 14px;
+  border-top: 1px solid #edf1ef;
+  color: #536b63;
+  font-size: 9px;
+}
+.portfolio-history article > b {
+  color: #173d33;
+}
+.staff-save-message {
+  margin: 0;
+  color: #08705a;
+  font-size: 10px;
+  font-weight: 750;
+}
+@media (max-width: 700px) {
+  .staff-performance-panel {
+    padding: 14px;
+  }
+  .staff-performance-panel > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .staff-performance-panel > header .add-button {
+    width: 100%;
+  }
+  .staff-assignment-grid,
+  .staff-coaching-grid {
+    grid-template-columns: 1fr;
+  }
+  .portfolio-entry {
+    grid-template-columns: 1fr 1fr;
+  }
+  .portfolio-entry > div {
+    grid-column: 1/-1;
+  }
+  .portfolio-entry > .add-button {
+    grid-column: 1/-1;
+  }
+  .portfolio-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .portfolio-history article {
+    grid-template-columns: 72px 1fr 1fr;
+  }
+  .portfolio-history article span:nth-of-type(3),
+  .portfolio-history article > b {
+    grid-column: 2/-1;
+  }
+  .staff-performance-panel textarea {
+    height: 68px;
+  }
+}
 .month-calendar-card {
   touch-action: pan-y;
 }
