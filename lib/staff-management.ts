@@ -27,6 +27,12 @@ export type StaffManagementRecord = {
   issues: string;
   coachingPlan: string;
   months: PortfolioMonth[];
+  regionalAnnualTotals?: Array<{
+    year: string;
+    region: "B&O" | "Cape Region";
+    leasesConcluded: number;
+    totalLeaseValue: number;
+  }>;
   updatedAt?: string;
 };
 
