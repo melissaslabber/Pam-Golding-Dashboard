@@ -136,6 +136,7 @@ type Appointment = {
   title: string;
   place: string;
   date: string;
+  endDate?: string;
   time: string;
   duration: string;
   allDay?: boolean;
@@ -326,6 +327,7 @@ export default function Home() {
       title: "",
       place: "",
       date: dateKey(0),
+      endDate: dateKey(0),
       time: "09:00",
       endTime: "10:00",
       allDay: false,
@@ -1076,8 +1078,13 @@ export default function Home() {
   };
   const addAppointment = async () => {
     if (!appointmentForm.title.trim() || !calendarProfileId) return;
+    if (appointmentForm.endDate < appointmentForm.date) {
+      setCalendarError("The To date cannot be before the From date.");
+      return;
+    }
     if (
       !appointmentForm.allDay &&
+      appointmentForm.endDate === appointmentForm.date &&
       appointmentForm.endTime <= appointmentForm.time
     ) {
       setCalendarError("The end time must be later than the start time.");
@@ -1116,6 +1123,7 @@ export default function Home() {
         title: "",
         place: "",
         date: dateKey(0),
+        endDate: dateKey(0),
         time: "09:00",
         endTime: "10:00",
         allDay: false,
@@ -1133,7 +1141,17 @@ export default function Home() {
   const saveAppointment = async () => {
     if (!editingAppointment?.title.trim()) return;
     const edited = editingAppointment;
-    if (!edited.allDay && edited.endTime && edited.endTime <= edited.time) {
+    const editedEndDate = edited.endDate || edited.date;
+    if (editedEndDate < edited.date) {
+      setCalendarError("The To date cannot be before the From date.");
+      return;
+    }
+    if (
+      !edited.allDay &&
+      editedEndDate === edited.date &&
+      edited.endTime &&
+      edited.endTime <= edited.time
+    ) {
       setCalendarError("The end time must be later than the start time.");
       return;
     }
@@ -1752,7 +1770,12 @@ export default function Home() {
                 refresh: refreshGoogleCalendar,
                 disconnect: disconnectGoogleCalendar,
                 openAdd: (date?: string) => {
-                  if (date) setAppointmentForm((form) => ({ ...form, date }));
+                  if (date)
+                    setAppointmentForm((form) => ({
+                      ...form,
+                      date,
+                      endDate: date,
+                    }));
                   setAppointmentOpen(true);
                 },
                 openTask: (date?: string) => {
@@ -1786,7 +1809,12 @@ export default function Home() {
                 refresh: refreshGoogleCalendar,
                 disconnect: disconnectGoogleCalendar,
                 openAdd: (date?: string) => {
-                  if (date) setAppointmentForm((form) => ({ ...form, date }));
+                  if (date)
+                    setAppointmentForm((form) => ({
+                      ...form,
+                      date,
+                      endDate: date,
+                    }));
                   setAppointmentOpen(true);
                 },
                 openTask: (date?: string) => {
@@ -2074,6 +2102,7 @@ function appointmentToGoogleEvent(
     | "title"
     | "place"
     | "date"
+    | "endDate"
     | "time"
     | "endTime"
     | "allDay"
@@ -2082,7 +2111,7 @@ function appointmentToGoogleEvent(
   >,
 ) {
   if (a.allDay) {
-    const nextDay = new Date(`${a.date}T12:00:00`);
+    const nextDay = new Date(`${a.endDate || a.date}T12:00:00`);
     nextDay.setDate(nextDay.getDate() + 1);
     return {
       summary: a.title,
@@ -2095,7 +2124,7 @@ function appointmentToGoogleEvent(
   const minutes = parseInt(a.duration) || 60,
     start = new Date(`${a.date}T${a.time}:00+02:00`),
     end = a.endTime
-      ? new Date(`${a.date}T${a.endTime}:00+02:00`)
+      ? new Date(`${a.endDate || a.date}T${a.endTime}:00+02:00`)
       : new Date(start.getTime() + minutes * 60000);
   return {
     summary: a.title,
@@ -2126,6 +2155,9 @@ function googleEventToAppointment(event: any): Appointment {
       parts.find((value) => value.type === type)?.value || "",
     endParts = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Africa/Johannesburg",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
       hourCycle: "h23",
@@ -2137,7 +2169,14 @@ function googleEventToAppointment(event: any): Appointment {
       Math.round((end.getTime() - start.getTime()) / 60000),
     ),
     description = String(event.description || ""),
-    link = event.hangoutLink || description.match(/https?:\/\/\S+/)?.[0] || "";
+    link = event.hangoutLink || description.match(/https?:\/\/\S+/)?.[0] || "",
+    googleEndDate = `${endPart("year")}-${endPart("month")}-${endPart("day")}`,
+    inclusiveEndDate = (() => {
+      if (!allDay) return googleEndDate;
+      const value = new Date(`${googleEndDate}T12:00:00`);
+      value.setDate(value.getDate() - 1);
+      return value.toLocaleDateString("en-CA");
+    })();
   return {
     id: `google:${event.id}`,
     googleEventId: event.id,
@@ -2146,6 +2185,7 @@ function googleEventToAppointment(event: any): Appointment {
     title: event.summary || "Untitled appointment",
     place: event.location || "Location to be confirmed",
     date: `${part("year")}-${part("month")}-${part("day")}`,
+    endDate: inclusiveEndDate,
     time: allDay ? "" : `${part("hour")}:${part("minute")}`,
     endTime: allDay ? "" : `${endPart("hour")}:${endPart("minute")}`,
     allDay,
@@ -2605,7 +2645,7 @@ function AppointmentDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="task-dialog">
+      <DialogContent className="task-dialog appointment-dialog">
         <DialogHeader>
           <DialogTitle>Add a meeting or appointment</DialogTitle>
           <DialogDescription>
@@ -2630,13 +2670,33 @@ function AppointmentDialog({
               placeholder="Address, office or online"
             />
           </label>
-          <label>
-            Date
+          <label className="appointment-start-date">
+            From date
             <input
               type="date"
               value={form.date}
               min={dateKey(0)}
-              onChange={(e: any) => setForm({ ...form, date: e.target.value })}
+              onChange={(e: any) =>
+                setForm({
+                  ...form,
+                  date: e.target.value,
+                  endDate:
+                    form.endDate < e.target.value
+                      ? e.target.value
+                      : form.endDate,
+                })
+              }
+            />
+          </label>
+          <label className="appointment-end-date">
+            To date
+            <input
+              type="date"
+              value={form.endDate}
+              min={form.date}
+              onChange={(e: any) =>
+                setForm({ ...form, endDate: e.target.value })
+              }
             />
           </label>
           <label className="all-day-field">
@@ -2708,7 +2768,7 @@ function AppointmentEditDialog({
       open={!!appointment}
       onOpenChange={(open) => !open && setAppointment(null)}
     >
-      <DialogContent className="task-dialog">
+      <DialogContent className="task-dialog appointment-dialog">
         <DialogHeader>
           <DialogTitle>Edit meeting or appointment</DialogTitle>
           <DialogDescription>
@@ -2736,13 +2796,31 @@ function AppointmentEditDialog({
                 }
               />
             </label>
-            <label>
-              Date
+            <label className="appointment-start-date">
+              From date
               <input
                 type="date"
                 value={appointment.date}
                 onChange={(e) =>
-                  setAppointment({ ...appointment, date: e.target.value })
+                  setAppointment({
+                    ...appointment,
+                    date: e.target.value,
+                    endDate:
+                      (appointment.endDate || appointment.date) < e.target.value
+                        ? e.target.value
+                        : appointment.endDate || appointment.date,
+                  })
+                }
+              />
+            </label>
+            <label className="appointment-end-date">
+              To date
+              <input
+                type="date"
+                value={appointment.endDate || appointment.date}
+                min={appointment.date}
+                onChange={(e) =>
+                  setAppointment({ ...appointment, endDate: e.target.value })
                 }
               />
             </label>
@@ -4098,8 +4176,13 @@ function CalendarView({
         : item.date === "Tomorrow"
           ? dateKey(1)
           : item.date,
+    appointmentOccursOn = (item: Appointment, date: string) => {
+      const start = appointmentDate(item),
+        end = item.endDate || start;
+      return start <= date && date <= end;
+    },
     dayAppointments = appointments
-      .filter((item: Appointment) => appointmentDate(item) === selectedDate)
+      .filter((item: Appointment) => appointmentOccursOn(item, selectedDate))
       .sort((a: Appointment, b: Appointment) => a.time.localeCompare(b.time)),
     selectedHoliday = southAfricanPublicHolidays(
       Number(selectedDate.slice(0, 4)),
@@ -4158,7 +4241,7 @@ function CalendarView({
           {calendarDays.map((day) => {
             const key = day.toLocaleDateString("en-CA"),
               events = appointments
-                .filter((item: Appointment) => appointmentDate(item) === key)
+                .filter((item: Appointment) => appointmentOccursOn(item, key))
                 .sort((a: Appointment, b: Appointment) =>
                   a.time.localeCompare(b.time),
                 ),

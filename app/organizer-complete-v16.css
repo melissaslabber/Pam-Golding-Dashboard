@@ -2825,6 +2825,79 @@
     margin: 0 !important;
   }
 }
+.appointment-dialog .appointment-form {
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 11px;
+}
+.appointment-dialog .appointment-form > label:first-child,
+.appointment-dialog .appointment-form > label:nth-child(2),
+.appointment-dialog .meeting-link-field,
+.appointment-dialog .all-day-field {
+  grid-column: 1/-1;
+}
+.appointment-dialog .form-grid input,
+.appointment-dialog .form-grid select {
+  height: 36px;
+  margin-top: 4px;
+}
+.appointment-dialog .appointment-form label {
+  font-size: 10px;
+}
+.appointment-dialog [data-slot="dialog-header"] {
+  gap: 3px;
+}
+.appointment-dialog [data-slot="dialog-header"] p {
+  font-size: 11px;
+}
+.appointment-dialog [data-slot="dialog-footer"] {
+  padding-top: 8px;
+}
+@media (max-width: 620px) {
+  [data-slot="dialog-content"].appointment-dialog {
+    top: calc(70px + env(safe-area-inset-top)) !important;
+    bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+    padding: 13px !important;
+    overflow: hidden !important;
+  }
+  .appointment-dialog .appointment-form {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 7px 9px !important;
+  }
+  .appointment-dialog .appointment-form > label:first-child,
+  .appointment-dialog .appointment-form > label:nth-child(2),
+  .appointment-dialog .meeting-link-field,
+  .appointment-dialog .all-day-field {
+    grid-column: 1/-1 !important;
+  }
+  .appointment-dialog .form-grid input,
+  .appointment-dialog .form-grid select {
+    height: 33px !important;
+    margin-top: 3px !important;
+  }
+  .appointment-dialog .all-day-field {
+    min-height: 34px !important;
+    padding: 6px 9px !important;
+  }
+  .appointment-dialog [data-slot="dialog-header"] {
+    top: -13px !important;
+    margin: -13px -13px 0 !important;
+    padding: 12px 42px 8px 13px !important;
+  }
+  .appointment-dialog [data-slot="dialog-header"] h2 {
+    font-size: 17px !important;
+  }
+  .appointment-dialog [data-slot="dialog-header"] p {
+    font-size: 9px !important;
+  }
+  .appointment-dialog [data-slot="dialog-footer"] {
+    bottom: -13px !important;
+    margin: 0 -13px -13px !important;
+    padding: 8px 13px 12px !important;
+  }
+  .appointment-dialog [data-slot="dialog-footer"] button {
+    min-height: 35px !important;
+  }
+}
 .month-calendar-card {
   touch-action: pan-y;
 }
