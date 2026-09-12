@@ -3473,17 +3473,20 @@
   }
   .portfolio-comparison-row,
   .portfolio-ytd-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scroll-snap-type: x proximity;
+    overflow: visible;
+    padding-bottom: 0;
   }
   .portfolio-comparison-row article,
   .portfolio-ytd-row article {
-    flex: 0 0 72%;
+    width: auto;
     min-width: 0;
-    scroll-snap-align: start;
+  }
+  .portfolio-comparison-row article:last-child,
+  .portfolio-ytd-row article:last-child {
+    grid-column: 1 / -1;
   }
   .portfolio-history article {
     grid-template-columns: 72px 1fr 1fr;

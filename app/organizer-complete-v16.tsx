@@ -1447,7 +1447,7 @@ export default function Home() {
     );
   const isManager = view === "manager";
   return (
-    <main className="app-shell" data-release="manager-overview-ytd-v25">
+    <main className="app-shell" data-release="manager-overview-no-horizontal-scroll-v26">
       <style>{`@media(max-width:620px){.workspace>header{display:flex!important;position:sticky!important;top:0!important;z-index:30!important;height:70px!important;padding:0 13px!important;background:#fff!important}.header-logo{display:block!important;width:38px!important;height:38px!important;object-fit:cover!important;border-radius:9px!important}.mobile-primary-nav{position:fixed!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;z-index:999!important;background:#fff!important;border-top:1px solid #d4e4de!important;padding:5px 5px calc(6px + env(safe-area-inset-bottom))!important}.content{padding-bottom:110px!important}}`}</style>
       <aside className={`side-panel ${mobileNav ? "side-open" : ""}`}>
         <div className="brand">
