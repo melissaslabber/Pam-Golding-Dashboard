@@ -1,2 +1,2 @@
-// Pam Golding Rentals Organiser V33 — separate Manager profiles
-export { default } from "./organizer-complete-v33";
+// Pam Golding Rentals Dashboard V34 — configurable task-status access
+export { default } from "./organizer-complete-v34";
