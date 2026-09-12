@@ -2711,8 +2711,8 @@ function AppointmentDialog({
           </label>
           {!form.allDay && (
             <>
-              <label>
-                From
+              <label className="appointment-start-time">
+                From time
                 <input
                   type="time"
                   value={form.time}
@@ -2721,8 +2721,8 @@ function AppointmentDialog({
                   }
                 />
               </label>
-              <label>
-                To
+              <label className="appointment-end-time">
+                To time
                 <input
                   type="time"
                   value={form.endTime}
@@ -2839,8 +2839,8 @@ function AppointmentEditDialog({
             </label>
             {!appointment.allDay && (
               <>
-                <label>
-                  From
+                <label className="appointment-start-time">
+                  From time
                   <input
                     type="time"
                     value={appointment.time}
@@ -2849,8 +2849,8 @@ function AppointmentEditDialog({
                     }
                   />
                 </label>
-                <label>
-                  To
+                <label className="appointment-end-time">
+                  To time
                   <input
                     type="time"
                     value={appointment.endTime || ""}

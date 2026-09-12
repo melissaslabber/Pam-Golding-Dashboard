@@ -2835,6 +2835,34 @@
 .appointment-dialog .all-day-field {
   grid-column: 1/-1;
 }
+.appointment-dialog .appointment-form > label:first-child {
+  order: 1;
+}
+.appointment-dialog .appointment-form > label:nth-child(2) {
+  order: 2;
+}
+.appointment-dialog .all-day-field {
+  order: 3;
+}
+.appointment-dialog .appointment-start-date {
+  order: 4;
+  grid-column: 1 !important;
+}
+.appointment-dialog .appointment-start-time {
+  order: 5;
+  grid-column: 2 !important;
+}
+.appointment-dialog .appointment-end-date {
+  order: 6;
+  grid-column: 1 !important;
+}
+.appointment-dialog .appointment-end-time {
+  order: 7;
+  grid-column: 2 !important;
+}
+.appointment-dialog .meeting-link-field {
+  order: 8;
+}
 .appointment-dialog .form-grid input,
 .appointment-dialog .form-grid select {
   height: 36px;
@@ -2857,7 +2885,9 @@
     top: calc(70px + env(safe-area-inset-top)) !important;
     bottom: calc(88px + env(safe-area-inset-bottom)) !important;
     padding: 13px !important;
-    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
   }
   .appointment-dialog .appointment-form {
     grid-template-columns: 1fr 1fr !important;
