@@ -5474,14 +5474,20 @@ function TeamView({
   return (
     <>
       <style>{`
-        details.regional-staff-group>summary, details.office-staff-group>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none}
+        details.regional-staff-group>summary, details.office-staff-group>summary{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;cursor:pointer;list-style:none}
         details.regional-staff-group>summary::-webkit-details-marker, details.office-staff-group>summary::-webkit-details-marker{display:none}
         details.regional-staff-group>summary:after, details.office-staff-group>summary:after{content:'⌄';font-size:22px;color:#0b6653;transition:transform .2s ease}
         details[open].regional-staff-group>summary:after, details[open].office-staff-group>summary:after{transform:rotate(180deg)}
+        details.regional-staff-group>summary{padding:15px 18px;background:linear-gradient(120deg,#eef7f3,#f8fbfa)}
+        details.regional-staff-group>summary>div{min-width:0}
+        details.regional-staff-group>summary span{display:block;color:#08705a;font-size:8px;font-weight:900;letter-spacing:.13em;line-height:1.2}
+        details.regional-staff-group>summary h2{margin:3px 0 0;color:#173d33;font:700 21px Georgia,serif;line-height:1.15}
+        details.regional-staff-group>summary>strong{color:#5b746b;font-size:11px;white-space:nowrap}
         details.office-staff-group{border:1px solid #d5e1dd;border-radius:14px;padding:14px;margin-top:10px;background:#fff}
-        details.office-staff-group>summary h3{margin:0;color:#174b3e}
+        details.office-staff-group>summary h3{margin:0;color:#174b3e;font-size:16px;line-height:1.2}
         details.office-staff-group>summary strong{margin-left:auto;font-size:11px;color:#71817c}
         details.office-staff-group>.people-grid{margin-top:14px}
+        @media(max-width:620px){details.regional-staff-group>summary{padding:14px 16px}details.regional-staff-group>summary h2{font-size:19px}details.office-staff-group{padding:13px}}
       `}</style>
       <div className="user-toolbar">
         <div>
