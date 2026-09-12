@@ -71,9 +71,12 @@ import {
 } from "@/lib/organiser-store";
 import TenantApplicationPortal from "./tenant-application";
 import {
+  createManagerAccessCode,
+  hasManagerAccessCode,
   loadStaffManagementRecords,
   saveStaffManagementRecord,
   type StaffManagementRecord,
+  verifyManagerAccessCode,
 } from "@/lib/staff-management";
 
 type Priority = "Urgent" | "High" | "Normal" | "Low";
@@ -382,6 +385,9 @@ export default function Home() {
   const [staffManagement, setStaffManagement] = useState<
     StaffManagementRecord[]
   >([]);
+  const [managerUnlocked, setManagerUnlocked] = useState(false),
+    [managerGateOpen, setManagerGateOpen] = useState(false),
+    [managerCodeExists, setManagerCodeExists] = useState<boolean | null>(null);
   const [form, setForm] = useState({
     title: "",
     property: "",
@@ -591,11 +597,17 @@ export default function Home() {
     localStorage.setItem("pg-report-settings", JSON.stringify(reportSettings));
   }, [reportSettings, ready]);
   useEffect(() => {
-    if (!ready || current?.role !== "Manager" || !supabaseConfigured) return;
+    if (
+      !ready ||
+      current?.role !== "Manager" ||
+      !managerUnlocked ||
+      !supabaseConfigured
+    )
+      return;
     loadStaffManagementRecords()
       .then(setStaffManagement)
       .catch((error) => console.error("Staff management load failed", error));
-  }, [ready, current?.profileId, current?.role]);
+  }, [ready, current?.profileId, current?.role, managerUnlocked]);
   useEffect(() => {
     if (current && current.role !== "Manager" && view === "manager") {
       setView("personal");
@@ -1041,6 +1053,8 @@ export default function Home() {
     localStorage.removeItem("pg-user");
     void releaseStaffSession();
     setCurrent(null);
+    setManagerUnlocked(false);
+    setManagerGateOpen(false);
     setMobileNav(false);
     setLoginCode("");
   };
@@ -1547,16 +1561,24 @@ export default function Home() {
           <div className="view-switch">
             <button
               className={!isManager ? "selected" : ""}
-              onClick={() => setView("personal")}
+              onClick={() => {
+                setView("personal");
+                setManagerUnlocked(false);
+              }}
             >
               My profile
             </button>
             {current.role === "Manager" && (
               <button
                 className={isManager ? "selected" : ""}
-                onClick={() => {
-                  setView("manager");
-                  setActive("Team");
+                onClick={async () => {
+                  setManagerGateOpen(true);
+                  setManagerCodeExists(null);
+                  try {
+                    setManagerCodeExists(await hasManagerAccessCode());
+                  } catch {
+                    setManagerCodeExists(false);
+                  }
                 }}
               >
                 <ShieldCheck />
@@ -1965,9 +1987,142 @@ export default function Home() {
             add={addNewLease}
             users={isManager ? users : linkedUsers}
           />
+          <ManagerAccessDialog
+            open={managerGateOpen}
+            setOpen={setManagerGateOpen}
+            codeExists={managerCodeExists}
+            unlock={() => {
+              setManagerUnlocked(true);
+              setView("manager");
+              setActive("Team");
+              setManagerGateOpen(false);
+            }}
+          />
         </div>
       </section>
     </main>
+  );
+}
+
+function ManagerAccessDialog({ open, setOpen, codeExists, unlock }: any) {
+  const [code, setCode] = useState(""),
+    [confirmCode, setConfirmCode] = useState(""),
+    [error, setError] = useState(""),
+    [checking, setChecking] = useState(false);
+  useEffect(() => {
+    if (!open) {
+      setCode("");
+      setConfirmCode("");
+      setError("");
+    }
+  }, [open]);
+  const submit = async () => {
+    if (!/^\d{4,8}$/.test(code)) {
+      setError("Use a private code containing 4 to 8 numbers.");
+      return;
+    }
+    if (codeExists === false && code !== confirmCode) {
+      setError("The two codes do not match.");
+      return;
+    }
+    setChecking(true);
+    setError("");
+    try {
+      const allowed = codeExists
+        ? await verifyManagerAccessCode(code)
+        : await createManagerAccessCode(code);
+      if (!allowed) {
+        setError("That manager code is incorrect.");
+        return;
+      }
+      unlock();
+    } catch (requestError: any) {
+      setError(
+        requestError?.message || "Manager access could not be verified.",
+      );
+    } finally {
+      setChecking(false);
+    }
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="manager-access-dialog">
+        <DialogHeader>
+          <div className="manager-lock-icon">
+            <KeyRound />
+          </div>
+          <DialogTitle>
+            {codeExists === false
+              ? "Create your manager code"
+              : "Manager access"}
+          </DialogTitle>
+          <DialogDescription>
+            {codeExists === false
+              ? "Choose your own private code. This code protects the confidential Manager area."
+              : "Enter your private manager code to view staff and portfolio information."}
+          </DialogDescription>
+        </DialogHeader>
+        {codeExists === null ? (
+          <div className="manager-code-loading">
+            <Loader2 className="spin" /> Checking manager security…
+          </div>
+        ) : (
+          <div className="manager-code-fields">
+            <label>
+              {codeExists ? "Manager code" : "Choose manager code"}
+              <input
+                type="password"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={8}
+                value={code}
+                onChange={(event) =>
+                  setCode(event.target.value.replace(/\D/g, ""))
+                }
+                placeholder="4–8 numbers"
+              />
+            </label>
+            {codeExists === false && (
+              <label>
+                Confirm manager code
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={8}
+                  value={confirmCode}
+                  onChange={(event) =>
+                    setConfirmCode(event.target.value.replace(/\D/g, ""))
+                  }
+                  placeholder="Enter it again"
+                />
+              </label>
+            )}
+            {error && <p className="manager-code-error">{error}</p>}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            className="add-button"
+            disabled={checking || codeExists === null}
+            onClick={submit}
+          >
+            {checking ? (
+              <>
+                <Loader2 className="spin" /> Verifying…
+              </>
+            ) : codeExists === false ? (
+              "Save code and open Manager"
+            ) : (
+              "Unlock Manager"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

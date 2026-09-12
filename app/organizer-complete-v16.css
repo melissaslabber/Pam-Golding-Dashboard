@@ -2930,6 +2930,68 @@
 }
 
 /* Manager-only staff performance and portfolio workspace. */
+.manager-access-dialog {
+  max-width: 430px;
+}
+.manager-access-dialog [data-slot="dialog-header"] {
+  align-items: center;
+  text-align: center;
+}
+.manager-lock-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 5px;
+  border-radius: 14px;
+  background: #e7f4ef;
+  color: #08705a;
+}
+.manager-lock-icon svg {
+  width: 23px;
+}
+.manager-code-fields {
+  display: grid;
+  gap: 11px;
+  padding: 5px 0;
+}
+.manager-code-fields label {
+  color: #3e5a51;
+  font-size: 11px;
+  font-weight: 800;
+}
+.manager-code-fields input {
+  width: 100%;
+  height: 45px;
+  margin-top: 6px;
+  padding: 0 13px;
+  border: 1px solid #cbdcd5;
+  border-radius: 9px;
+  color: #173d33;
+  font-size: 17px;
+  letter-spacing: 0.18em;
+}
+.manager-code-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 88px;
+  color: #60756d;
+  font-size: 11px;
+}
+.manager-code-loading svg {
+  width: 18px;
+}
+.manager-code-error {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: #fff0f2;
+  color: #b7102d;
+  font-size: 10px;
+  font-weight: 750;
+}
 .manager-insights-panel {
   display: grid;
   gap: 14px;
