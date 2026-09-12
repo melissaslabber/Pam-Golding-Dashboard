@@ -1447,7 +1447,7 @@ export default function Home() {
     );
   const isManager = view === "manager";
   return (
-    <main className="app-shell" data-release="full-calendar-manager-restore-v24">
+    <main className="app-shell" data-release="manager-overview-ytd-v25">
       <style>{`@media(max-width:620px){.workspace>header{display:flex!important;position:sticky!important;top:0!important;z-index:30!important;height:70px!important;padding:0 13px!important;background:#fff!important}.header-logo{display:block!important;width:38px!important;height:38px!important;object-fit:cover!important;border-radius:9px!important}.mobile-primary-nav{position:fixed!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;z-index:999!important;background:#fff!important;border-top:1px solid #d4e4de!important;padding:5px 5px calc(6px + env(safe-area-inset-bottom))!important}.content{padding-bottom:110px!important}}`}</style>
       <aside className={`side-panel ${mobileNav ? "side-open" : ""}`}>
         <div className="brand">
@@ -6001,7 +6001,12 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
           Save monthly figures
         </Button>
       </div>
-      <div className="portfolio-summary-grid">
+      <div className="portfolio-overview-group">
+        <div className="portfolio-overview-heading">
+          <span>FEBRUARY COMPARISON</span>
+          <h3>Year-on-year portfolio overview</h3>
+        </div>
+        <div className="portfolio-summary-grid portfolio-comparison-row">
         <article>
           <small>FEBRUARY 2025 BASELINE</small>
           <strong>{february2025?.newProperties || 0} new properties</strong>
@@ -6027,7 +6032,7 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
               : "positive"
           }
         >
-          <small>FEBRUARY YEAR-ON-YEAR</small>
+          <small>PORTFOLIO GROWTH / LOSS</small>
           <strong>
             {(february2026?.newProperties || 0) -
               (february2025?.newProperties || 0) >
@@ -6037,55 +6042,49 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
             {(february2026?.newProperties || 0) -
               (february2025?.newProperties || 0)}
           </strong>
-          <span>change in new properties</span>
+          <span>change in new properties recorded</span>
         </article>
+        </div>
+      </div>
+      <div className="portfolio-overview-group">
+        <div className="portfolio-overview-heading">
+          <span>{currentYear} YEAR TO DATE</span>
+          <h3>Current-year performance</h3>
+        </div>
+        <div className="portfolio-summary-grid portfolio-ytd-row">
         <article>
-          <small>LATEST NEW PROPERTIES</small>
-          <strong>{latest?.newProperties || 0}</strong>
-          <span>{latest?.month || "No month recorded"}</span>
-        </article>
-        <article>
-          <small>LATEST TOTAL LEASES</small>
-          <strong>{latest?.totalLeases || 0}</strong>
-          <span>{latest?.month || "No month recorded"}</span>
-        </article>
-        <article>
-          <small>LATEST TOTAL LEASE VALUE</small>
-          <strong>{currency(latest?.totalLeaseValue || 0)}</strong>
-          <span>{latest?.month || "No month recorded"}</span>
-        </article>
-        <article>
-          <small>CURRENT QUARTER LEASES</small>
-          <strong>
-            {quarterMonths.reduce(
-              (sum, item) => sum + (item.totalLeases || 0),
-              0,
-            )}
-          </strong>
-          <span>renewals and new-tenant leases</span>
-        </article>
-        <article>
-          <small>CURRENT YEAR NEW PROPERTIES</small>
+          <small>NEW PROPERTIES</small>
           <strong>
             {yearMonths.reduce(
               (sum, item) => sum + (item.newProperties || 0),
               0,
             )}
           </strong>
-          <span>new properties added</span>
+          <span>brand-new properties added this year</span>
         </article>
         <article>
-          <small>LEASE VALUE MONTH-ON-MONTH</small>
+          <small>TOTAL LEASES COMPLETED</small>
           <strong>
-            {latest && previous
-              ? currency(
-                  (latest.totalLeaseValue || 0) -
-                    (previous.totalLeaseValue || 0),
-                )
-              : currency(0)}
+            {yearMonths.reduce(
+              (sum, item) => sum + (item.totalLeases || 0),
+              0,
+            )}
           </strong>
-          <span>change from the previous entry</span>
+          <span>renewals and new-tenant leases this year</span>
         </article>
+        <article>
+          <small>TOTAL LEASE VALUE</small>
+          <strong>
+            {currency(
+              yearMonths.reduce(
+                (sum, item) => sum + (item.totalLeaseValue || 0),
+                0,
+              ),
+            )}
+          </strong>
+          <span>combined lease value for {currentYear}</span>
+        </article>
+        </div>
       </div>
       <div className="manager-advice">
         <Sparkles />
