@@ -5102,78 +5102,133 @@ function TeamView({
         </Button>
       </div>
       <ManagerPortfolioInsights users={users} records={staffManagement} />
-      <div className="people-grid">
-        {users.map((u: User) => (
-          <article key={u.name}>
-            <div className="person-top">
-              <span className="large-avatar">{u.initials}</span>
-              <span
-                className={
-                  tasks.some(
-                    (t: Task) =>
-                      getProfileAssignees(users, u).includes(t.assignee) &&
-                      t.priority === "Urgent" &&
-                      !t.done,
-                  )
-                    ? "status busy"
-                    : "status"
-                }
-              >
-                {tasks.some(
-                  (t: Task) =>
-                    getProfileAssignees(users, u).includes(t.assignee) &&
-                    t.priority === "Urgent" &&
-                    !t.done,
-                )
-                  ? "Urgent work"
-                  : "On track"}
-              </span>
-            </div>
-            <h2>{u.name}</h2>
-            <p>{u.role} · Regional Rentals</p>
-            {u.linkedTo && (
-              <span className="linked-label">
-                <Users />
-                Linked to{" "}
-                {users.find((x: User) => x.short === u.linkedTo)?.short}
-              </span>
-            )}
-            <div className="person-numbers">
-              <span>
-                <strong>
-                  {
-                    tasks.filter(
-                      (t: Task) =>
-                        getProfileAssignees(users, u).includes(t.assignee) &&
-                        !t.done,
-                    ).length
-                  }
-                </strong>{" "}
-                open
-              </span>
-              <span>
-                <strong>
-                  {
-                    tasks.filter(
-                      (t: Task) =>
-                        getProfileAssignees(users, u).includes(t.assignee) &&
-                        t.done,
-                    ).length
-                  }
-                </strong>{" "}
-                done
-              </span>
-            </div>
-            <div className="user-card-actions">
-              <Button variant="outline" onClick={() => setSelected(u)}>
-                View profile and tasks
-              </Button>
-              <Button variant="outline" onClick={() => setManaging(u)}>
-                Manage user
-              </Button>
-            </div>
-          </article>
-        ))}
+      <div className="regional-staff-groups">
+        {Object.entries(REGION_OFFICES).map(([region, offices]) => {
+          const regionUsers = users.filter((user: User) => {
+            const record = staffManagement.find(
+              (item: StaffManagementRecord) =>
+                item.profileId === user.profileId,
+            );
+            return staffRegion(record) === region;
+          });
+          return (
+            <section className="regional-staff-group" key={region}>
+              <header>
+                <div>
+                  <span>REGION</span>
+                  <h2>{region}</h2>
+                </div>
+                <strong>{regionUsers.length} staff</strong>
+              </header>
+              <div className="office-staff-groups">
+                {[...offices, "Unassigned"].map((office) => {
+                  const officeUsers = regionUsers.filter((user: User) => {
+                    const record = staffManagement.find(
+                      (item: StaffManagementRecord) =>
+                        item.profileId === user.profileId,
+                    );
+                    return (record?.office || "Unassigned") === office;
+                  });
+                  if (!officeUsers.length) return null;
+                  return (
+                    <section className="office-staff-group" key={office}>
+                      <h3>{office}</h3>
+                      <div className="people-grid">
+                        {officeUsers.map((u: User) => (
+                          <article key={u.name}>
+                            <div className="person-top">
+                              <span className="large-avatar">{u.initials}</span>
+                              <span
+                                className={
+                                  tasks.some(
+                                    (t: Task) =>
+                                      getProfileAssignees(users, u).includes(
+                                        t.assignee,
+                                      ) &&
+                                      t.priority === "Urgent" &&
+                                      !t.done,
+                                  )
+                                    ? "status busy"
+                                    : "status"
+                                }
+                              >
+                                {tasks.some(
+                                  (t: Task) =>
+                                    getProfileAssignees(users, u).includes(
+                                      t.assignee,
+                                    ) &&
+                                    t.priority === "Urgent" &&
+                                    !t.done,
+                                )
+                                  ? "Urgent work"
+                                  : "On track"}
+                              </span>
+                            </div>
+                            <h2>{u.name}</h2>
+                            <p>{u.role} · Regional Rentals</p>
+                            {u.linkedTo && (
+                              <span className="linked-label">
+                                <Users />
+                                Linked to{" "}
+                                {
+                                  users.find(
+                                    (x: User) => x.short === u.linkedTo,
+                                  )?.short
+                                }
+                              </span>
+                            )}
+                            <div className="person-numbers">
+                              <span>
+                                <strong>
+                                  {
+                                    tasks.filter(
+                                      (t: Task) =>
+                                        getProfileAssignees(users, u).includes(
+                                          t.assignee,
+                                        ) && !t.done,
+                                    ).length
+                                  }
+                                </strong>{" "}
+                                open
+                              </span>
+                              <span>
+                                <strong>
+                                  {
+                                    tasks.filter(
+                                      (t: Task) =>
+                                        getProfileAssignees(users, u).includes(
+                                          t.assignee,
+                                        ) && t.done,
+                                    ).length
+                                  }
+                                </strong>{" "}
+                                done
+                              </span>
+                            </div>
+                            <div className="user-card-actions">
+                              <Button
+                                variant="outline"
+                                onClick={() => setSelected(u)}
+                              >
+                                View profile and tasks
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => setManaging(u)}
+                              >
+                                Manage user
+                              </Button>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
       </div>
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
@@ -5313,45 +5368,116 @@ function TeamView({
     </>
   );
 }
+const REGION_OFFICES: Record<string, string[]> = {
+  "Cape Region": [
+    "City Bowl",
+    "Sea Point",
+    "Southern Suburbs",
+    "West Coast",
+    "Camps Bay",
+    "Hout Bay / Fish Hoek / Noordhoek",
+  ],
+  "B&O": [
+    "Paarl",
+    "Wellington",
+    "Franschhoek",
+    "Stellenbosch",
+    "Somerset West",
+    "Northern Suburbs",
+  ],
+  Overberg: ["Onrus / Hermanus", "Betty's Bay"],
+};
+function staffRegion(record?: StaffManagementRecord) {
+  if (record?.region && REGION_OFFICES[record.region]) return record.region;
+  const office = record?.office || "";
+  return (
+    Object.entries(REGION_OFFICES).find(([, offices]) =>
+      offices.includes(office),
+    )?.[0] || "B&O"
+  );
+}
+function monthDate(month: string) {
+  return new Date(`${month}-01T12:00:00`);
+}
+function periodMatch(
+  month: string,
+  anchor: string,
+  period: string,
+  previous = false,
+) {
+  const date = monthDate(month),
+    target = monthDate(anchor);
+  if (period === "Monthly") {
+    target.setMonth(target.getMonth() - (previous ? 1 : 0));
+    return (
+      date.getFullYear() === target.getFullYear() &&
+      date.getMonth() === target.getMonth()
+    );
+  }
+  if (period === "Quarterly") {
+    target.setMonth(target.getMonth() - (previous ? 3 : 0));
+    return (
+      date.getFullYear() === target.getFullYear() &&
+      Math.floor(date.getMonth() / 3) === Math.floor(target.getMonth() / 3)
+    );
+  }
+  target.setFullYear(target.getFullYear() - (previous ? 1 : 0));
+  return date.getFullYear() === target.getFullYear();
+}
+function portfolioTotals(
+  records: StaffManagementRecord[],
+  anchor: string,
+  period: string,
+  previous = false,
+) {
+  return records.reduce(
+    (totals, record) => {
+      const months = (record.months || []).filter((item) =>
+        periodMatch(item.month, anchor, period, previous),
+      );
+      const ending = [...months].sort((a, b) =>
+        b.month.localeCompare(a.month),
+      )[0];
+      totals.properties += ending?.activeProperties || 0;
+      totals.gross += ending?.grossValue || 0;
+      totals.gained += months.reduce((sum, item) => sum + item.gained, 0);
+      totals.lost += months.reduce((sum, item) => sum + item.lost, 0);
+      totals.leases += months.reduce((sum, item) => sum + item.newLeases, 0);
+      return totals;
+    },
+    { properties: 0, gross: 0, gained: 0, lost: 0, leases: 0 },
+  );
+}
 function ManagerPortfolioInsights({ users, records }: any) {
-  const [profileId, setProfileId] = useState("all"),
-    selectedRecords: StaffManagementRecord[] =
-      profileId === "all"
-        ? records
-        : records.filter(
-            (record: StaffManagementRecord) => record.profileId === profileId,
-          ),
-    latestRows = selectedRecords
-      .map((record) => ({
-        record,
-        month: [...record.months].sort((a, b) =>
-          b.month.localeCompare(a.month),
-        )[0],
-      }))
-      .filter((item) => item.month),
-    properties = latestRows.reduce(
-      (sum, item) => sum + item.month.activeProperties,
-      0,
+  const [scope, setScope] = useState("all"),
+    [period, setPeriod] = useState("Monthly"),
+    selectedRecords: StaffManagementRecord[] = records.filter(
+      (record: StaffManagementRecord) => {
+        if (scope === "all") return true;
+        if (scope.startsWith("region:"))
+          return staffRegion(record) === scope.slice(7);
+        if (scope.startsWith("office:"))
+          return record.office === scope.slice(7);
+        return record.profileId === scope.slice(6);
+      },
     ),
-    gained = latestRows.reduce((sum, item) => sum + item.month.gained, 0),
-    lost = latestRows.reduce((sum, item) => sum + item.month.lost, 0),
-    leases = latestRows.reduce((sum, item) => sum + item.month.newLeases, 0),
-    gross = latestRows.reduce((sum, item) => sum + item.month.grossValue, 0),
-    declining = latestRows
-      .filter((item) => item.month.lost > item.month.gained)
-      .map(
-        (item) =>
-          users.find((user: User) => user.profileId === item.record.profileId)
-            ?.name,
-      )
-      .filter(Boolean),
-    insight = !latestRows.length
-      ? "Add monthly figures to staff profiles to generate portfolio insights."
-      : declining.length
-        ? `${declining.join(", ")} ${declining.length === 1 ? "has" : "have"} negative net growth. Review landlord losses, retention activity and prospecting targets.`
-        : leases === 0
-          ? "Portfolio retention is stable, but no new leases were recorded. Review lead generation and conversion activity."
-          : `The selected portfolio has positive net growth of ${gained - lost}. Continue the strongest acquisition activities and monitor retention monthly.`;
+    anchor =
+      records
+        .flatMap((record: StaffManagementRecord) => record.months || [])
+        .map((item: any) => item.month)
+        .sort()
+        .at(-1) || dateKey(0).slice(0, 7),
+    currentTotals = portfolioTotals(selectedRecords, anchor, period),
+    previousTotals = portfolioTotals(selectedRecords, anchor, period, true),
+    change = currentTotals.properties - previousTotals.properties,
+    netGrowth = currentTotals.gained - currentTotals.lost,
+    insight = !selectedRecords.some((record) => record.months?.length)
+      ? "Add monthly figures to staff profiles to generate regional, office and individual insights."
+      : netGrowth < 0
+        ? `This selection lost ${Math.abs(netGrowth)} net properties in the current ${period.toLowerCase()} period. Review landlord retention, loss reasons and prospecting activity by office.`
+        : currentTotals.leases === 0
+          ? `No new leases were recorded for this ${period.toLowerCase()} period. Compare offices and set focused lead-generation and conversion targets.`
+          : `This selection achieved net growth of ${netGrowth} with ${currentTotals.leases} new leases. Compare the strongest office with the previous period and repeat its most effective activity.`;
   const currency = new Intl.NumberFormat("en-ZA", {
     style: "currency",
     currency: "ZAR",
@@ -5364,39 +5490,80 @@ function ManagerPortfolioInsights({ users, records }: any) {
           <span>AI PORTFOLIO INSIGHTS</span>
           <h2>Growth and coaching overview</h2>
         </div>
-        <select
-          value={profileId}
-          onChange={(event) => setProfileId(event.target.value)}
-        >
-          <option value="all">All staff</option>
-          {users
-            .filter((user: User) => user.role !== "Assistant" && user.profileId)
-            .map((user: User) => (
-              <option key={user.profileId} value={user.profileId}>
-                {user.name}
-              </option>
+        <div className="manager-report-filters">
+          <select
+            value={scope}
+            onChange={(event) => setScope(event.target.value)}
+            aria-label="Reporting group"
+          >
+            <option value="all">All regions combined</option>
+            {Object.entries(REGION_OFFICES).map(([region, offices]) => (
+              <optgroup label={region} key={region}>
+                <option value={`region:${region}`}>{region} total</option>
+                {offices.map((office) => (
+                  <option value={`office:${office}`} key={office}>
+                    {office}
+                  </option>
+                ))}
+              </optgroup>
             ))}
-        </select>
+            <optgroup label="Individual staff">
+              {users
+                .filter((user: User) => user.profileId)
+                .map((user: User) => (
+                  <option
+                    key={user.profileId}
+                    value={`staff:${user.profileId}`}
+                  >
+                    {user.name}
+                  </option>
+                ))}
+            </optgroup>
+          </select>
+          <select
+            value={period}
+            onChange={(event) => setPeriod(event.target.value)}
+            aria-label="Comparison period"
+          >
+            <option>Monthly</option>
+            <option>Quarterly</option>
+            <option>Yearly</option>
+          </select>
+        </div>
       </header>
+      <div className="report-period-label">
+        <span>{period.toUpperCase()} REPORT</span>
+        <strong>
+          Current period compared with previous{" "}
+          {period.toLowerCase().replace("ly", "")}
+        </strong>
+      </div>
       <div className="manager-insight-stats">
         <article>
-          <strong>{properties}</strong>
+          <strong>{currentTotals.properties}</strong>
           <span>Active properties</span>
         </article>
-        <article className={gained - lost < 0 ? "negative" : ""}>
+        <article className={netGrowth < 0 ? "negative" : ""}>
           <strong>
-            {gained - lost > 0 ? "+" : ""}
-            {gained - lost}
+            {netGrowth > 0 ? "+" : ""}
+            {netGrowth}
           </strong>
           <span>Net growth</span>
         </article>
         <article>
-          <strong>{leases}</strong>
+          <strong>{currentTotals.leases}</strong>
           <span>New leases</span>
         </article>
         <article>
-          <strong>{currency.format(gross)}</strong>
+          <strong>{currency.format(currentTotals.gross)}</strong>
           <span>Gross portfolio value</span>
+        </article>
+        <article className={change < 0 ? "negative" : ""}>
+          <strong>
+            {change > 0 ? "+" : ""}
+            {change}
+          </strong>
+          <span>Properties vs previous period</span>
         </article>
       </div>
       <div className="manager-ai-advice">
@@ -5409,6 +5576,7 @@ function ManagerPortfolioInsights({ users, records }: any) {
 function StaffPerformancePanel({ user, users, record, onSave }: any) {
   const emptyRecord: StaffManagementRecord = {
       profileId: user.profileId,
+      region: "B&O",
       office: "",
       managerProfileId: "arno-and-melissa",
       strengths: "",
@@ -5502,12 +5670,31 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       </header>
       <div className="staff-assignment-grid">
         <label>
+          Region
+          <select
+            value={draft.region || staffRegion(draft)}
+            onChange={(e) =>
+              setDraft({ ...draft, region: e.target.value, office: "" })
+            }
+          >
+            {Object.keys(REGION_OFFICES).map((region) => (
+              <option key={region}>{region}</option>
+            ))}
+          </select>
+        </label>
+        <label>
           Office
-          <input
+          <select
             value={draft.office}
             onChange={(e) => setDraft({ ...draft, office: e.target.value })}
-            placeholder="e.g. Paarl"
-          />
+          >
+            <option value="">Choose office</option>
+            {REGION_OFFICES[draft.region || staffRegion(draft)].map(
+              (office) => (
+                <option key={office}>{office}</option>
+              ),
+            )}
+          </select>
         </label>
         <label>
           Reports to
