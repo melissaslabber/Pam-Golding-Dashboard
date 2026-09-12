@@ -3260,6 +3260,39 @@
 .portfolio-entry > div {
   grid-column: 1/-1;
 }
+.portfolio-entry > div > p {
+  margin: 5px 0 0;
+  color: #688078;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.portfolio-month-shortcuts {
+  display: flex !important;
+  gap: 8px;
+}
+.portfolio-month-shortcuts button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #bdd5cc;
+  border-radius: 8px;
+  background: #fff;
+  color: #31584b;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.portfolio-month-shortcuts button.selected {
+  border-color: #08705a;
+  background: #08705a;
+  color: #fff;
+}
+.portfolio-entry label small {
+  display: block;
+  margin-top: 4px;
+  color: #71817c;
+  font-size: 8px;
+  font-weight: 600;
+}
 .portfolio-entry h3 {
   margin: 4px 0 0;
   color: #173d33;
@@ -3412,6 +3445,10 @@
   }
   .portfolio-entry > div {
     grid-column: 1/-1;
+  }
+  .portfolio-month-shortcuts {
+    align-items: stretch;
+    flex-direction: column;
   }
   .portfolio-entry > .add-button {
     grid-column: 1/-1;

@@ -5766,6 +5766,8 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       (item) =>
         Math.floor((Number(item.month.slice(5, 7)) - 1) / 3) === currentQuarter,
     ),
+    february2025 = months.find((item) => item.month === "2025-02"),
+    february2026 = months.find((item) => item.month === "2026-02"),
     netGrowth = latest ? latest.gained - latest.lost : 0,
     advice = !latest
       ? "Add the first monthly portfolio record to generate coaching guidance."
@@ -5789,7 +5791,27 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       setSaving(false);
     }
   };
+  const selectMonth = (selectedMonth: string) => {
+    const existing = draft.months.find((item) => item.month === selectedMonth);
+    setMonth(
+      existing || {
+        month: selectedMonth,
+        activeProperties: 0,
+        gained: 0,
+        lost: 0,
+        newLeases: 0,
+        grossValue: 0,
+      },
+    );
+    setMessage("");
+  };
   const saveMonth = () => {
+    if (month.month !== "2025-02" && month.month < "2026-02") {
+      setMessage(
+        "Choose February 2025, February 2026, or a month after February 2026.",
+      );
+      return;
+    }
     const next = {
       ...draft,
       months: [
@@ -5900,15 +5922,36 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       <div className="portfolio-entry">
         <div>
           <span>MONTHLY PORTFOLIO RECORD</span>
-          <h3>Enter confirmed figures</h3>
+          <h3>Enter each agent’s total statistics</h3>
+          <p>
+            Start with the February 2025 and February 2026 benchmarks, then
+            capture every month from March 2026 onward.
+          </p>
+        </div>
+        <div className="portfolio-month-shortcuts">
+          <button
+            className={month.month === "2025-02" ? "selected" : ""}
+            onClick={() => selectMonth("2025-02")}
+          >
+            February 2025 baseline
+          </button>
+          <button
+            className={month.month === "2026-02" ? "selected" : ""}
+            onClick={() => selectMonth("2026-02")}
+          >
+            February 2026 comparison
+          </button>
         </div>
         <label>
-          Month
+          Month being captured
           <input
             type="month"
             value={month.month}
-            onChange={(e) => setMonth({ ...month, month: e.target.value })}
+            onChange={(e) => selectMonth(e.target.value)}
           />
+          <small>
+            Use March 2026, April 2026 and every month going forward.
+          </small>
         </label>
         <label>
           Active properties
@@ -5975,6 +6018,37 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
         </Button>
       </div>
       <div className="portfolio-summary-grid">
+        <article>
+          <small>FEBRUARY 2025 BASELINE</small>
+          <strong>{february2025?.activeProperties || 0}</strong>
+          <span>{currency(february2025?.grossValue || 0)} gross value</span>
+        </article>
+        <article>
+          <small>FEBRUARY 2026 TOTAL</small>
+          <strong>{february2026?.activeProperties || 0}</strong>
+          <span>{currency(february2026?.grossValue || 0)} gross value</span>
+        </article>
+        <article
+          className={
+            (february2026?.activeProperties || 0) -
+              (february2025?.activeProperties || 0) <
+            0
+              ? "negative"
+              : "positive"
+          }
+        >
+          <small>FEBRUARY YEAR-ON-YEAR</small>
+          <strong>
+            {(february2026?.activeProperties || 0) -
+              (february2025?.activeProperties || 0) >
+            0
+              ? "+"
+              : ""}
+            {(february2026?.activeProperties || 0) -
+              (february2025?.activeProperties || 0)}
+          </strong>
+          <span>change in total properties</span>
+        </article>
         <article>
           <small>LATEST PORTFOLIO</small>
           <strong>{latest?.activeProperties || 0}</strong>
