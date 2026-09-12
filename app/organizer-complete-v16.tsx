@@ -1447,7 +1447,7 @@ export default function Home() {
     );
   const isManager = view === "manager";
   return (
-    <main className="app-shell" data-release="manager-overview-no-horizontal-scroll-v26">
+    <main className="app-shell" data-release="manager-monthly-lease-breakdown-v27">
       <style>{`@media(max-width:620px){.workspace>header{display:flex!important;position:sticky!important;top:0!important;z-index:30!important;height:70px!important;padding:0 13px!important;background:#fff!important}.header-logo{display:block!important;width:38px!important;height:38px!important;object-fit:cover!important;border-radius:9px!important}.mobile-primary-nav{position:fixed!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;z-index:999!important;background:#fff!important;border-top:1px solid #d4e4de!important;padding:5px 5px calc(6px + env(safe-area-inset-bottom))!important}.content{padding-bottom:110px!important}}`}</style>
       <aside className={`side-panel ${mobileNav ? "side-open" : ""}`}>
         <div className="brand">
@@ -5756,6 +5756,8 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
     [month, setMonth] = useState({
       month: dateKey(0).slice(0, 7),
       newProperties: 0,
+      newTenantLeases: 0,
+      leaseRenewals: 0,
       totalLeases: 0,
       totalLeaseValue: 0,
     }),
@@ -5801,12 +5803,21 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
   const selectMonth = (selectedMonth: string) => {
     const existing = draft.months.find((item) => item.month === selectedMonth);
     setMonth(
-      existing || {
+      existing
+        ? {
+            ...existing,
+            newTenantLeases:
+              existing.newTenantLeases ?? existing.totalLeases ?? 0,
+            leaseRenewals: existing.leaseRenewals ?? 0,
+          }
+        : {
         month: selectedMonth,
         newProperties: 0,
+        newTenantLeases: 0,
+        leaseRenewals: 0,
         totalLeases: 0,
         totalLeaseValue: 0,
-      },
+          },
     );
     setMessage("");
   };
@@ -5817,11 +5828,13 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       );
       return;
     }
+    const monthlyTotalLeases =
+      Number(month.newTenantLeases || 0) + Number(month.leaseRenewals || 0);
     const next = {
       ...draft,
       months: [
         ...draft.months.filter((item) => item.month !== month.month),
-        month,
+        { ...month, totalLeases: monthlyTotalLeases },
       ],
     };
     void save(next);
@@ -5970,16 +5983,29 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
           />
         </label>
         <label>
-          Total number of leases
+          New-tenant leases completed
           <input
             type="number"
             min="0"
-            value={month.totalLeases}
+            value={month.newTenantLeases || 0}
             onChange={(e) =>
-              setMonth({ ...month, totalLeases: Number(e.target.value) })
+              setMonth({ ...month, newTenantLeases: Number(e.target.value) })
             }
           />
-          <small>Include both renewals and new-tenant leases.</small>
+        </label>
+        <label>
+          Lease renewals completed
+          <input
+            type="number"
+            min="0"
+            value={month.leaseRenewals || 0}
+            onChange={(e) =>
+              setMonth({ ...month, leaseRenewals: Number(e.target.value) })
+            }
+          />
+          <small>
+            Total leases this month: {Number(month.newTenantLeases || 0) + Number(month.leaseRenewals || 0)}
+          </small>
         </label>
         <label>
           Total lease value for this month (R)
@@ -6100,7 +6126,9 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
             <article key={item.month}>
               <strong>{item.month}</strong>
               <span>{item.newProperties || 0} new properties</span>
-              <span>{item.totalLeases || 0} total leases</span>
+              <span>
+                {item.totalLeases || 0} total leases ({item.newTenantLeases || 0} new tenants · {item.leaseRenewals || 0} renewals)
+              </span>
               <b>{currency(item.totalLeaseValue || 0)}</b>
             </article>
           ))}
