@@ -1447,7 +1447,7 @@ export default function Home() {
     );
   const isManager = view === "manager";
   return (
-    <main className="app-shell" data-release="manager-monthly-lease-breakdown-v27">
+    <main className="app-shell" data-release="assistant-no-portfolio-stats-v29">
       <style>{`@media(max-width:620px){.workspace>header{display:flex!important;position:sticky!important;top:0!important;z-index:30!important;height:70px!important;padding:0 13px!important;background:#fff!important}.header-logo{display:block!important;width:38px!important;height:38px!important;object-fit:cover!important;border-radius:9px!important}.mobile-primary-nav{position:fixed!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;z-index:999!important;background:#fff!important;border-top:1px solid #d4e4de!important;padding:5px 5px calc(6px + env(safe-area-inset-bottom))!important}.content{padding-bottom:110px!important}}`}</style>
       <aside className={`side-panel ${mobileNav ? "side-open" : ""}`}>
         <div className="brand">
@@ -5741,6 +5741,7 @@ function ManagerPortfolioInsights({ users, records }: any) {
   );
 }
 function StaffPerformancePanel({ user, users, record, onSave }: any) {
+  const isAssistant = String(user.role || "").toLowerCase() === "assistant";
   const emptyRecord: StaffManagementRecord = {
       profileId: user.profileId,
       region: "B&O",
@@ -5771,8 +5772,20 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
     ),
     latest = months[0],
     previous = months[1],
-    currentYear = month.month.slice(0, 4),
-    yearMonths = months.filter((item) => item.month.startsWith(currentYear)),
+    selectedCalendarYear = Number(month.month.slice(0, 4)),
+    selectedCalendarMonth = Number(month.month.slice(5, 7)),
+    reportingYearStart =
+      selectedCalendarMonth >= 3
+        ? selectedCalendarYear
+        : selectedCalendarYear - 1,
+    reportingYearEnd = reportingYearStart + 1,
+    reportingPeriodStart = `${reportingYearStart}-03`,
+    reportingPeriodEnd = `${reportingYearEnd}-02`,
+    reportingYearLabel = `${reportingYearStart}/${reportingYearEnd}`,
+    yearMonths = months.filter(
+      (item) =>
+        item.month >= reportingPeriodStart && item.month <= reportingPeriodEnd,
+    ),
     currentQuarter = Math.floor((Number(month.month.slice(5, 7)) - 1) / 3),
     quarterMonths = yearMonths.filter(
       (item) =>
@@ -5852,7 +5865,9 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
           <span>MANAGER ONLY</span>
           <h2>Staff performance and portfolio</h2>
           <p>
-            Private coaching information and manually confirmed monthly figures.
+            {isAssistant
+              ? "Private staff support, development and coaching information."
+              : "Private coaching information and manually confirmed monthly figures."}
           </p>
         </div>
         <Button
@@ -5937,6 +5952,8 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
           />
         </label>
       </div>
+      {!isAssistant && (
+        <>
       <div className="portfolio-entry">
         <div>
           <span>MONTHLY PORTFOLIO RECORD</span>
@@ -6074,7 +6091,7 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       </div>
       <div className="portfolio-overview-group">
         <div className="portfolio-overview-heading">
-          <span>{currentYear} YEAR TO DATE</span>
+          <span>{reportingYearLabel} YEAR TO DATE</span>
           <h3>Current-year performance</h3>
         </div>
         <div className="portfolio-summary-grid portfolio-ytd-row">
@@ -6108,7 +6125,7 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
               ),
             )}
           </strong>
-          <span>combined lease value for {currentYear}</span>
+          <span>combined lease value for {reportingYearLabel}</span>
         </article>
         </div>
       </div>
@@ -6133,6 +6150,8 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
             </article>
           ))}
         </div>
+      )}
+        </>
       )}
       {message && <p className="staff-save-message">{message}</p>}
     </section>
