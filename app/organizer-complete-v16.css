@@ -2572,13 +2572,19 @@
   box-shadow: 0 9px 28px rgba(18, 65, 54, 0.06);
 }
 .month-calendar-head {
+  position: relative !important;
+  top: auto !important;
+  z-index: 1 !important;
   display: grid;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 84px !important;
   grid-template-columns: 40px 1fr 40px;
   align-items: center;
   gap: 12px;
   padding: 18px;
   border-bottom: 1px solid #e5ece9;
-  background: linear-gradient(120deg, #063f35, #08705a);
+  background: linear-gradient(120deg, #063f35, #08705a) !important;
   color: #fff;
 }
 .month-calendar-head > button {
@@ -2599,11 +2605,20 @@
   text-align: center;
 }
 .month-calendar-head h2 {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   margin: 0;
-  color: #fff;
+  color: #fff !important;
   font:
     700 23px Georgia,
     serif;
+}
+.month-calendar-head .visible-month-title {
+  font-size: 25px !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+  text-transform: none !important;
 }
 .month-calendar-head .calendar-today-button {
   width: auto;

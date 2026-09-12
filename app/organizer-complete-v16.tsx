@@ -4022,7 +4022,7 @@ function CalendarView({
             <ChevronLeft />
           </button>
           <div>
-            <h2>
+            <h2 className="visible-month-title">
               {new Intl.DateTimeFormat("en-ZA", {
                 month: "long",
                 year: "numeric",
