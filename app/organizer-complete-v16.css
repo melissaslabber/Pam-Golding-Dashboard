@@ -3377,7 +3377,7 @@
 }
 .portfolio-history article {
   display: grid;
-  grid-template-columns: 90px repeat(3, 1fr) auto;
+  grid-template-columns: 90px repeat(2, 1fr) auto;
   gap: 9px;
   padding: 10px 14px;
   border-top: 1px solid #edf1ef;
@@ -3459,7 +3459,6 @@
   .portfolio-history article {
     grid-template-columns: 72px 1fr 1fr;
   }
-  .portfolio-history article span:nth-of-type(3),
   .portfolio-history article > b {
     grid-column: 2/-1;
   }

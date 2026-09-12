@@ -5590,17 +5590,21 @@ function portfolioTotals(
       const months = (record.months || []).filter((item) =>
         periodMatch(item.month, anchor, period, previous),
       );
-      const ending = [...months].sort((a, b) =>
-        b.month.localeCompare(a.month),
-      )[0];
-      totals.properties += ending?.activeProperties || 0;
-      totals.gross += ending?.grossValue || 0;
-      totals.gained += months.reduce((sum, item) => sum + item.gained, 0);
-      totals.lost += months.reduce((sum, item) => sum + item.lost, 0);
-      totals.leases += months.reduce((sum, item) => sum + item.newLeases, 0);
+      totals.newProperties += months.reduce(
+        (sum, item) => sum + (item.newProperties || 0),
+        0,
+      );
+      totals.renewals += months.reduce(
+        (sum, item) => sum + (item.leaseRenewals || 0),
+        0,
+      );
+      totals.leaseValue += months.reduce(
+        (sum, item) => sum + (item.totalLeaseValue || 0),
+        0,
+      );
       return totals;
     },
-    { properties: 0, gross: 0, gained: 0, lost: 0, leases: 0 },
+    { newProperties: 0, renewals: 0, leaseValue: 0 },
   );
 }
 function ManagerPortfolioInsights({ users, records }: any) {
@@ -5624,15 +5628,16 @@ function ManagerPortfolioInsights({ users, records }: any) {
         .at(-1) || dateKey(0).slice(0, 7),
     currentTotals = portfolioTotals(selectedRecords, anchor, period),
     previousTotals = portfolioTotals(selectedRecords, anchor, period, true),
-    change = currentTotals.properties - previousTotals.properties,
-    netGrowth = currentTotals.gained - currentTotals.lost,
+    propertyChange = currentTotals.newProperties - previousTotals.newProperties,
+    renewalChange = currentTotals.renewals - previousTotals.renewals,
+    valueChange = currentTotals.leaseValue - previousTotals.leaseValue,
     insight = !selectedRecords.some((record) => record.months?.length)
       ? "Add monthly figures to staff profiles to generate regional, office and individual insights."
-      : netGrowth < 0
-        ? `This selection lost ${Math.abs(netGrowth)} net properties in the current ${period.toLowerCase()} period. Review landlord retention, loss reasons and prospecting activity by office.`
-        : currentTotals.leases === 0
-          ? `No new leases were recorded for this ${period.toLowerCase()} period. Compare offices and set focused lead-generation and conversion targets.`
-          : `This selection achieved net growth of ${netGrowth} with ${currentTotals.leases} new leases. Compare the strongest office with the previous period and repeat its most effective activity.`;
+      : currentTotals.newProperties === 0
+        ? `No new properties were recorded for this ${period.toLowerCase()} period. Compare offices and set focused prospecting targets.`
+        : propertyChange < 0
+          ? `New property growth is ${Math.abs(propertyChange)} below the previous period. Review lead sources and the strongest-performing office.`
+          : `This selection added ${currentTotals.newProperties} new properties and completed ${currentTotals.renewals} renewals. Continue the activity producing the best lease value.`;
   const currency = new Intl.NumberFormat("en-ZA", {
     style: "currency",
     currency: "ZAR",
@@ -5695,30 +5700,37 @@ function ManagerPortfolioInsights({ users, records }: any) {
       </div>
       <div className="manager-insight-stats">
         <article>
-          <strong>{currentTotals.properties}</strong>
-          <span>Active properties</span>
-        </article>
-        <article className={netGrowth < 0 ? "negative" : ""}>
-          <strong>
-            {netGrowth > 0 ? "+" : ""}
-            {netGrowth}
-          </strong>
-          <span>Net growth</span>
+          <strong>{currentTotals.newProperties}</strong>
+          <span>New properties</span>
         </article>
         <article>
-          <strong>{currentTotals.leases}</strong>
-          <span>New leases</span>
+          <strong>{currentTotals.renewals}</strong>
+          <span>Lease renewals</span>
         </article>
         <article>
-          <strong>{currency.format(currentTotals.gross)}</strong>
-          <span>Gross portfolio value</span>
+          <strong>{currency.format(currentTotals.leaseValue)}</strong>
+          <span>Total lease value</span>
         </article>
-        <article className={change < 0 ? "negative" : ""}>
+        <article className={propertyChange < 0 ? "negative" : ""}>
           <strong>
-            {change > 0 ? "+" : ""}
-            {change}
+            {propertyChange > 0 ? "+" : ""}
+            {propertyChange}
           </strong>
-          <span>Properties vs previous period</span>
+          <span>New properties vs previous</span>
+        </article>
+        <article className={renewalChange < 0 ? "negative" : ""}>
+          <strong>
+            {renewalChange > 0 ? "+" : ""}
+            {renewalChange}
+          </strong>
+          <span>Renewals vs previous</span>
+        </article>
+        <article className={valueChange < 0 ? "negative" : ""}>
+          <strong>
+            {valueChange > 0 ? "+" : ""}
+            {currency.format(valueChange)}
+          </strong>
+          <span>Lease value vs previous</span>
         </article>
       </div>
       <div className="manager-ai-advice">
@@ -5743,11 +5755,9 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
     [draft, setDraft] = useState<StaffManagementRecord>(record || emptyRecord),
     [month, setMonth] = useState({
       month: dateKey(0).slice(0, 7),
-      activeProperties: 0,
-      gained: 0,
-      lost: 0,
-      newLeases: 0,
-      grossValue: 0,
+      newProperties: 0,
+      leaseRenewals: 0,
+      totalLeaseValue: 0,
     }),
     [saving, setSaving] = useState(false),
     [message, setMessage] = useState("");
@@ -5768,16 +5778,13 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
     ),
     february2025 = months.find((item) => item.month === "2025-02"),
     february2026 = months.find((item) => item.month === "2026-02"),
-    netGrowth = latest ? latest.gained - latest.lost : 0,
     advice = !latest
       ? "Add the first monthly portfolio record to generate coaching guidance."
-      : latest.lost > latest.gained
-        ? "Prioritise landlord retention calls and review every lost-property reason with this staff member."
-        : latest.newLeases === 0
-          ? "The portfolio is stable, but new leasing activity needs attention. Set weekly prospecting and landlord-contact targets."
-          : netGrowth > 0
-            ? "Positive portfolio growth. Identify the strongest lead source and repeat it consistently next month."
-            : "Portfolio is steady. Focus the coaching plan on converting new mandates while protecting current landlords.";
+      : latest.newProperties === 0
+        ? "No new properties were recorded this month. Set weekly prospecting and landlord-contact targets."
+        : latest.leaseRenewals === 0
+          ? "New properties were added, but no lease renewals were recorded. Review the renewal pipeline and upcoming expiry dates."
+          : "New properties and renewals were recorded. Identify the strongest lead source and repeat it consistently next month.";
   const save = async (next = draft) => {
     setSaving(true);
     setMessage("");
@@ -5796,11 +5803,9 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
     setMonth(
       existing || {
         month: selectedMonth,
-        activeProperties: 0,
-        gained: 0,
-        lost: 0,
-        newLeases: 0,
-        grossValue: 0,
+        newProperties: 0,
+        leaseRenewals: 0,
+        totalLeaseValue: 0,
       },
     );
     setMessage("");
@@ -5954,58 +5959,36 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
           </small>
         </label>
         <label>
-          Active properties
+          New properties
           <input
             type="number"
             min="0"
-            value={month.activeProperties}
+            value={month.newProperties}
             onChange={(e) =>
-              setMonth({ ...month, activeProperties: Number(e.target.value) })
+              setMonth({ ...month, newProperties: Number(e.target.value) })
             }
           />
         </label>
         <label>
-          Properties gained
+          Lease renewals
           <input
             type="number"
             min="0"
-            value={month.gained}
+            value={month.leaseRenewals}
             onChange={(e) =>
-              setMonth({ ...month, gained: Number(e.target.value) })
+              setMonth({ ...month, leaseRenewals: Number(e.target.value) })
             }
           />
         </label>
         <label>
-          Properties lost
-          <input
-            type="number"
-            min="0"
-            value={month.lost}
-            onChange={(e) =>
-              setMonth({ ...month, lost: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          New leases concluded
-          <input
-            type="number"
-            min="0"
-            value={month.newLeases}
-            onChange={(e) =>
-              setMonth({ ...month, newLeases: Number(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Gross portfolio value (R)
+          Total lease value for this month (R)
           <input
             type="number"
             min="0"
             step="100"
-            value={month.grossValue}
+            value={month.totalLeaseValue}
             onChange={(e) =>
-              setMonth({ ...month, grossValue: Number(e.target.value) })
+              setMonth({ ...month, totalLeaseValue: Number(e.target.value) })
             }
           />
         </label>
@@ -6020,18 +6003,24 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
       <div className="portfolio-summary-grid">
         <article>
           <small>FEBRUARY 2025 BASELINE</small>
-          <strong>{february2025?.activeProperties || 0}</strong>
-          <span>{currency(february2025?.grossValue || 0)} gross value</span>
+          <strong>{february2025?.newProperties || 0} new properties</strong>
+          <span>
+            {february2025?.leaseRenewals || 0} renewals ·{" "}
+            {currency(february2025?.totalLeaseValue || 0)}
+          </span>
         </article>
         <article>
           <small>FEBRUARY 2026 TOTAL</small>
-          <strong>{february2026?.activeProperties || 0}</strong>
-          <span>{currency(february2026?.grossValue || 0)} gross value</span>
+          <strong>{february2026?.newProperties || 0} new properties</strong>
+          <span>
+            {february2026?.leaseRenewals || 0} renewals ·{" "}
+            {currency(february2026?.totalLeaseValue || 0)}
+          </span>
         </article>
         <article
           className={
-            (february2026?.activeProperties || 0) -
-              (february2025?.activeProperties || 0) <
+            (february2026?.newProperties || 0) -
+              (february2025?.newProperties || 0) <
             0
               ? "negative"
               : "positive"
@@ -6039,64 +6028,62 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
         >
           <small>FEBRUARY YEAR-ON-YEAR</small>
           <strong>
-            {(february2026?.activeProperties || 0) -
-              (february2025?.activeProperties || 0) >
+            {(february2026?.newProperties || 0) -
+              (february2025?.newProperties || 0) >
             0
               ? "+"
               : ""}
-            {(february2026?.activeProperties || 0) -
-              (february2025?.activeProperties || 0)}
+            {(february2026?.newProperties || 0) -
+              (february2025?.newProperties || 0)}
           </strong>
-          <span>change in total properties</span>
+          <span>change in new properties</span>
         </article>
         <article>
-          <small>LATEST PORTFOLIO</small>
-          <strong>{latest?.activeProperties || 0}</strong>
+          <small>LATEST NEW PROPERTIES</small>
+          <strong>{latest?.newProperties || 0}</strong>
           <span>{latest?.month || "No month recorded"}</span>
         </article>
-        <article className={netGrowth < 0 ? "negative" : "positive"}>
-          <small>NET MONTHLY GROWTH</small>
+        <article>
+          <small>LATEST LEASE RENEWALS</small>
+          <strong>{latest?.leaseRenewals || 0}</strong>
+          <span>{latest?.month || "No month recorded"}</span>
+        </article>
+        <article>
+          <small>LATEST TOTAL LEASE VALUE</small>
+          <strong>{currency(latest?.totalLeaseValue || 0)}</strong>
+          <span>{latest?.month || "No month recorded"}</span>
+        </article>
+        <article>
+          <small>CURRENT QUARTER RENEWALS</small>
           <strong>
-            {netGrowth > 0 ? "+" : ""}
-            {netGrowth}
+            {quarterMonths.reduce(
+              (sum, item) => sum + (item.leaseRenewals || 0),
+              0,
+            )}
           </strong>
-          <span>
-            {latest
-              ? `${latest.gained} gained · ${latest.lost} lost`
-              : "No figures yet"}
-          </span>
+          <span>lease renewals completed</span>
         </article>
         <article>
-          <small>GROSS PORTFOLIO VALUE</small>
-          <strong>{currency(latest?.grossValue || 0)}</strong>
-          <span>
-            {latest?.activeProperties
-              ? `${currency(latest.grossValue / latest.activeProperties)} average/property`
-              : "Awaiting figures"}
-          </span>
-        </article>
-        <article>
-          <small>CURRENT QUARTER</small>
+          <small>CURRENT YEAR NEW PROPERTIES</small>
           <strong>
-            {quarterMonths.reduce((sum, item) => sum + item.newLeases, 0)}
+            {yearMonths.reduce(
+              (sum, item) => sum + (item.newProperties || 0),
+              0,
+            )}
           </strong>
-          <span>new leases concluded</span>
+          <span>new properties added</span>
         </article>
         <article>
-          <small>CURRENT YEAR</small>
-          <strong>
-            {yearMonths.reduce((sum, item) => sum + item.gained, 0)}
-          </strong>
-          <span>properties gained</span>
-        </article>
-        <article>
-          <small>MONTH-ON-MONTH</small>
+          <small>LEASE VALUE MONTH-ON-MONTH</small>
           <strong>
             {latest && previous
-              ? latest.activeProperties - previous.activeProperties
-              : 0}
+              ? currency(
+                  (latest.totalLeaseValue || 0) -
+                    (previous.totalLeaseValue || 0),
+                )
+              : currency(0)}
           </strong>
-          <span>change in active properties</span>
+          <span>change from the previous entry</span>
         </article>
       </div>
       <div className="manager-advice">
@@ -6112,12 +6099,9 @@ function StaffPerformancePanel({ user, users, record, onSave }: any) {
           {months.map((item) => (
             <article key={item.month}>
               <strong>{item.month}</strong>
-              <span>{item.activeProperties} properties</span>
-              <span>
-                +{item.gained} / −{item.lost}
-              </span>
-              <span>{item.newLeases} leases</span>
-              <b>{currency(item.grossValue)}</b>
+              <span>{item.newProperties || 0} new properties</span>
+              <span>{item.leaseRenewals || 0} renewals</span>
+              <b>{currency(item.totalLeaseValue || 0)}</b>
             </article>
           ))}
         </div>
