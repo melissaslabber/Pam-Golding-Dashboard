@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 export type PortfolioMonth = {
   month: string;
   newProperties: number;
-  leaseRenewals: number;
+  totalLeases: number;
   totalLeaseValue: number;
 };
 
@@ -27,11 +27,20 @@ export async function loadStaffManagementRecords() {
     .select("target_profile_id,payload,updated_at")
     .order("updated_at", { ascending: false });
   if (error) throw error;
-  return (data || []).map((row: any) => ({
-    ...(row.payload || {}),
-    profileId: row.target_profile_id,
-    updatedAt: row.updated_at,
-  })) as StaffManagementRecord[];
+  return (data || []).map((row: any) => {
+    const payload = row.payload || {};
+    return {
+      ...payload,
+      profileId: row.target_profile_id,
+      months: (payload.months || []).map((item: any) => ({
+        month: item.month,
+        newProperties: Number(item.newProperties ?? item.gained ?? 0),
+        totalLeases: Number(item.totalLeases ?? item.leaseRenewals ?? 0),
+        totalLeaseValue: Number(item.totalLeaseValue ?? 0),
+      })),
+      updatedAt: row.updated_at,
+    };
+  }) as StaffManagementRecord[];
 }
 
 export async function saveStaffManagementRecord(record: StaffManagementRecord) {
