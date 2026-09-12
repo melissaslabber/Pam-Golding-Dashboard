@@ -3,6 +3,8 @@ import { supabase } from "./supabase";
 export type PortfolioMonth = {
   month: string;
   newProperties: number;
+  newTenantLeases?: number;
+  leaseRenewals?: number;
   totalLeases: number;
   totalLeaseValue: number;
 };
@@ -35,6 +37,10 @@ export async function loadStaffManagementRecords() {
       months: (payload.months || []).map((item: any) => ({
         month: item.month,
         newProperties: Number(item.newProperties ?? item.gained ?? 0),
+        newTenantLeases: Number(
+          item.newTenantLeases ?? item.totalLeases ?? item.leaseRenewals ?? 0,
+        ),
+        leaseRenewals: Number(item.leaseRenewals ?? 0),
         totalLeases: Number(item.totalLeases ?? item.leaseRenewals ?? 0),
         totalLeaseValue: Number(item.totalLeaseValue ?? 0),
       })),
