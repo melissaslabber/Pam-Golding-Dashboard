@@ -4144,7 +4144,10 @@ function CalendarView({
               <button
                 key={key}
                 className={`${day.getMonth() !== month.getMonth() ? "outside" : ""} ${key === dateKey(0) ? "today" : ""} ${key === selectedDate ? "selected" : ""} ${holiday ? "holiday" : ""}`}
-                onClick={() => setSelectedDate(key)}
+                onClick={() => {
+                  setSelectedDate(key);
+                  calendarControls.openAdd(key);
+                }}
               >
                 <strong>{day.getDate()}</strong>
                 {holiday && <small>{holiday}</small>}
