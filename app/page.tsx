@@ -1,2 +1,2 @@
-// Pam Golding Rentals Organiser V24 — full homepage, calendar and manager restore
-export { default } from "./organizer-complete-v16";
+// Pam Golding Rentals Organiser V25 — regional annual reporting update
+export { default } from "./organizer-complete-v25";
