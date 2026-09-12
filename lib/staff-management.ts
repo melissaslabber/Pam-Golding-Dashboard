@@ -49,3 +49,28 @@ export async function saveStaffManagementRecord(record: StaffManagementRecord) {
   );
   if (error) throw error;
 }
+
+export async function hasManagerAccessCode() {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data, error } = await supabase.rpc("manager_code_status");
+  if (error) throw error;
+  return Boolean(data);
+}
+
+export async function createManagerAccessCode(code: string) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data, error } = await supabase.rpc("set_manager_access_code", {
+    new_code: code,
+  });
+  if (error) throw error;
+  return Boolean(data);
+}
+
+export async function verifyManagerAccessCode(code: string) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data, error } = await supabase.rpc("verify_manager_access_code", {
+    attempted_code: code,
+  });
+  if (error) throw error;
+  return Boolean(data);
+}
