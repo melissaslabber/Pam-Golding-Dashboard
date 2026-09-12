@@ -1,2 +1,2 @@
-// Pam Golding Rentals Organiser V29 — Manager landing choices
-export { default } from "./organizer-complete-v29";
+// Pam Golding Rentals Organiser V31 — regional heads and reporting layout
+export { default } from "./organizer-complete-v31";
