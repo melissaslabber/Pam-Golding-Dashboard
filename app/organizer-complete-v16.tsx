@@ -138,6 +138,8 @@ type Appointment = {
   date: string;
   time: string;
   duration: string;
+  allDay?: boolean;
+  endTime?: string;
   meetingLink?: string;
   calendarAdded?: boolean;
   googleEventId?: string;
@@ -325,6 +327,8 @@ export default function Home() {
       place: "",
       date: dateKey(0),
       time: "09:00",
+      endTime: "10:00",
+      allDay: false,
       duration: "60 minutes",
       meetingLink: "",
     });
@@ -1072,6 +1076,13 @@ export default function Home() {
   };
   const addAppointment = async () => {
     if (!appointmentForm.title.trim() || !calendarProfileId) return;
+    if (
+      !appointmentForm.allDay &&
+      appointmentForm.endTime <= appointmentForm.time
+    ) {
+      setCalendarError("The end time must be later than the start time.");
+      return;
+    }
     if (!googleConnected) {
       setCalendarError("Connect Google Calendar before adding an appointment.");
       setAppointmentOpen(false);
@@ -1106,6 +1117,8 @@ export default function Home() {
         place: "",
         date: dateKey(0),
         time: "09:00",
+        endTime: "10:00",
+        allDay: false,
         duration: "60 minutes",
         meetingLink: "",
       });
@@ -1120,6 +1133,10 @@ export default function Home() {
   const saveAppointment = async () => {
     if (!editingAppointment?.title.trim()) return;
     const edited = editingAppointment;
+    if (!edited.allDay && edited.endTime && edited.endTime <= edited.time) {
+      setCalendarError("The end time must be later than the start time.");
+      return;
+    }
     try {
       if (edited.googleEventId && calendarProfileId) {
         const response = await fetch("/api/google/events", {
@@ -1722,7 +1739,10 @@ export default function Home() {
                 connect: connectGoogleCalendar,
                 refresh: refreshGoogleCalendar,
                 disconnect: disconnectGoogleCalendar,
-                openAdd: () => setAppointmentOpen(true),
+                openAdd: (date?: string) => {
+                  if (date) setAppointmentForm((form) => ({ ...form, date }));
+                  setAppointmentOpen(true);
+                },
               }}
             />
           )}
@@ -1749,7 +1769,10 @@ export default function Home() {
                 connect: connectGoogleCalendar,
                 refresh: refreshGoogleCalendar,
                 disconnect: disconnectGoogleCalendar,
-                openAdd: () => setAppointmentOpen(true),
+                openAdd: (date?: string) => {
+                  if (date) setAppointmentForm((form) => ({ ...form, date }));
+                  setAppointmentOpen(true);
+                },
               }}
             />
           )}
@@ -2028,12 +2051,32 @@ function southAfricanPublicHolidays(year: number) {
 function appointmentToGoogleEvent(
   a: Pick<
     Appointment,
-    "title" | "place" | "date" | "time" | "duration" | "meetingLink"
+    | "title"
+    | "place"
+    | "date"
+    | "time"
+    | "endTime"
+    | "allDay"
+    | "duration"
+    | "meetingLink"
   >,
 ) {
+  if (a.allDay) {
+    const nextDay = new Date(`${a.date}T12:00:00`);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return {
+      summary: a.title,
+      location: a.place || "",
+      description: a.meetingLink ? `Online meeting: ${a.meetingLink}` : "",
+      start: { date: a.date },
+      end: { date: nextDay.toLocaleDateString("en-CA") },
+    };
+  }
   const minutes = parseInt(a.duration) || 60,
     start = new Date(`${a.date}T${a.time}:00+02:00`),
-    end = new Date(start.getTime() + minutes * 60000);
+    end = a.endTime
+      ? new Date(`${a.date}T${a.endTime}:00+02:00`)
+      : new Date(start.getTime() + minutes * 60000);
   return {
     summary: a.title,
     location: a.place || "",
@@ -2043,7 +2086,8 @@ function appointmentToGoogleEvent(
   };
 }
 function googleEventToAppointment(event: any): Appointment {
-  const startValue =
+  const allDay = Boolean(event.start?.date && !event.start?.dateTime),
+    startValue =
       event.start?.dateTime ||
       `${event.start?.date || dateKey(0)}T00:00:00+02:00`,
     endValue = event.end?.dateTime || startValue,
@@ -2060,6 +2104,14 @@ function googleEventToAppointment(event: any): Appointment {
     }).formatToParts(start),
     part = (type: string) =>
       parts.find((value) => value.type === type)?.value || "",
+    endParts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Africa/Johannesburg",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(end),
+    endPart = (type: string) =>
+      endParts.find((value) => value.type === type)?.value || "",
     minutes = Math.max(
       0,
       Math.round((end.getTime() - start.getTime()) / 60000),
@@ -2074,7 +2126,9 @@ function googleEventToAppointment(event: any): Appointment {
     title: event.summary || "Untitled appointment",
     place: event.location || "Location to be confirmed",
     date: `${part("year")}-${part("month")}-${part("day")}`,
-    time: `${part("hour")}:${part("minute")}`,
+    time: allDay ? "" : `${part("hour")}:${part("minute")}`,
+    endTime: allDay ? "" : `${endPart("hour")}:${endPart("minute")}`,
+    allDay,
     duration: `${minutes || 60} minutes`,
     meetingLink: link,
   };
@@ -2565,28 +2619,40 @@ function AppointmentDialog({
               onChange={(e: any) => setForm({ ...form, date: e.target.value })}
             />
           </label>
-          <label>
-            Time
+          <label className="all-day-field">
             <input
-              type="time"
-              value={form.time}
-              onChange={(e: any) => setForm({ ...form, time: e.target.value })}
-            />
-          </label>
-          <label>
-            Duration
-            <select
-              value={form.duration}
+              type="checkbox"
+              checked={form.allDay}
               onChange={(e: any) =>
-                setForm({ ...form, duration: e.target.value })
+                setForm({ ...form, allDay: e.target.checked })
               }
-            >
-              <option>30 minutes</option>
-              <option>60 minutes</option>
-              <option>90 minutes</option>
-              <option>120 minutes</option>
-            </select>
+            />
+            Whole day
           </label>
+          {!form.allDay && (
+            <>
+              <label>
+                From
+                <input
+                  type="time"
+                  value={form.time}
+                  onChange={(e: any) =>
+                    setForm({ ...form, time: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                To
+                <input
+                  type="time"
+                  value={form.endTime}
+                  onChange={(e: any) =>
+                    setForm({ ...form, endTime: e.target.value })
+                  }
+                />
+              </label>
+            </>
+          )}
           <label className="meeting-link-field">
             Zoom or Microsoft Teams link
             <input
@@ -2660,30 +2726,46 @@ function AppointmentEditDialog({
                 }
               />
             </label>
-            <label>
-              Time
+            <label className="all-day-field">
               <input
-                type="time"
-                value={appointment.time}
+                type="checkbox"
+                checked={Boolean(appointment.allDay)}
                 onChange={(e) =>
-                  setAppointment({ ...appointment, time: e.target.value })
+                  setAppointment({
+                    ...appointment,
+                    allDay: e.target.checked,
+                  })
                 }
               />
+              Whole day
             </label>
-            <label>
-              Duration
-              <select
-                value={appointment.duration}
-                onChange={(e) =>
-                  setAppointment({ ...appointment, duration: e.target.value })
-                }
-              >
-                <option>30 minutes</option>
-                <option>60 minutes</option>
-                <option>90 minutes</option>
-                <option>120 minutes</option>
-              </select>
-            </label>
+            {!appointment.allDay && (
+              <>
+                <label>
+                  From
+                  <input
+                    type="time"
+                    value={appointment.time}
+                    onChange={(e) =>
+                      setAppointment({ ...appointment, time: e.target.value })
+                    }
+                  />
+                </label>
+                <label>
+                  To
+                  <input
+                    type="time"
+                    value={appointment.endTime || ""}
+                    onChange={(e) =>
+                      setAppointment({
+                        ...appointment,
+                        endTime: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+              </>
+            )}
             <label className="meeting-link-field">
               Zoom or Microsoft Teams link
               <input
@@ -3903,6 +3985,8 @@ function CalendarCard({
 function Meeting({ appointment, onEdit, onDelete }: any) {
   const {
     time,
+    endTime,
+    allDay,
     title,
     place,
     duration = "60 minutes",
@@ -3941,7 +4025,7 @@ function Meeting({ appointment, onEdit, onDelete }: any) {
         onDelete?.(appointment.id);
       }}
     >
-      <time>{time}</time>
+      <time>{allDay ? "All day" : time}</time>
       <div className="meeting-line greenline" />
       <div>
         <strong>{title}</strong>
@@ -3958,7 +4042,7 @@ function Meeting({ appointment, onEdit, onDelete }: any) {
           </a>
         )}
         <small>
-          {duration}
+          {allDay ? "Whole day" : endTime ? `${time} – ${endTime}` : duration}
           <em>Tap to edit · hold to delete</em>
         </small>
       </div>
@@ -4068,7 +4152,7 @@ function CalendarView({
                   <span className="calendar-day-events">
                     {events.map((event: Appointment) => (
                       <em key={event.id}>
-                        <time>{event.time}</time>
+                        <time>{event.allDay ? "All day" : event.time}</time>
                         {event.title}
                       </em>
                     ))}
@@ -4086,7 +4170,10 @@ function CalendarView({
             <h2>{dateLabel(selectedDate)}</h2>
             <p>{formatDate(selectedDate)}</p>
           </div>
-          <Button className="add-button" onClick={calendarControls.openAdd}>
+          <Button
+            className="add-button"
+            onClick={() => calendarControls.openAdd(selectedDate)}
+          >
             <Plus /> Add appointment
           </Button>
         </header>

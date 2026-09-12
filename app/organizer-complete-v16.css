@@ -2743,6 +2743,30 @@
   font-size: 6px;
   font-weight: 900;
 }
+.appointment-form .all-day-field {
+  grid-column: 1/-1 !important;
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid #d5e1dc;
+  border-radius: 8px;
+  background: #f7faf9;
+  color: #294d43;
+}
+.appointment-form .all-day-field input {
+  display: block !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  accent-color: #08705a;
+}
+.appointment-form .all-day-field:has(input:checked) {
+  border-color: #87baa8;
+  background: #eaf5f0;
+  color: #075846;
+}
 .month-calendar-card {
   touch-action: pan-y;
 }
