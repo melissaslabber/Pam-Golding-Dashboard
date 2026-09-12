@@ -2557,6 +2557,275 @@
   }
 }
 
+/* Monthly appointments calendar with South African public holidays. */
+.month-calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
+  gap: 16px;
+}
+.month-calendar-card,
+.selected-day-card {
+  overflow: hidden;
+  border: 1px solid #dce7e3;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 9px 28px rgba(18, 65, 54, 0.06);
+}
+.month-calendar-head {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border-bottom: 1px solid #e5ece9;
+  background: linear-gradient(120deg, #063f35, #08705a);
+  color: #fff;
+}
+.month-calendar-head > button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.23);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+.month-calendar-head > button svg {
+  width: 19px;
+}
+.month-calendar-head > div {
+  text-align: center;
+}
+.month-calendar-head h2 {
+  margin: 0;
+  color: #fff;
+  font:
+    700 23px Georgia,
+    serif;
+}
+.month-calendar-head .calendar-today-button {
+  width: auto;
+  height: auto;
+  margin: 4px auto 0;
+  border: 0;
+  background: transparent;
+  color: #e8d49f;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.month-weekdays,
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.month-weekdays {
+  padding: 8px 10px 5px;
+  background: #f5f9f7;
+}
+.month-weekdays span {
+  text-align: center;
+  color: #687b74;
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+.month-grid {
+  padding: 0 10px 12px;
+}
+.month-grid > button {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 88px;
+  padding: 9px 7px;
+  border: 0;
+  border-right: 1px solid #edf1ef;
+  border-bottom: 1px solid #edf1ef;
+  background: #fff;
+  color: #24483e;
+  text-align: left;
+  cursor: pointer;
+}
+.month-grid > button:nth-child(7n) {
+  border-right: 0;
+}
+.month-grid > button:hover {
+  background: #f2f8f5;
+}
+.month-grid > button.outside {
+  opacity: 0.38;
+}
+.month-grid > button.today strong {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #08705a;
+  color: #fff;
+}
+.month-grid > button.selected {
+  z-index: 1;
+  outline: 2px solid #dfc98f;
+  outline-offset: -2px;
+  background: #fffaf0;
+}
+.month-grid > button.holiday {
+  background: #fff9eb;
+}
+.month-grid > button > strong {
+  font-size: 12px;
+}
+.month-grid > button > small {
+  overflow: hidden;
+  color: #9a6b20;
+  font-size: 7px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+.month-grid > button > b {
+  position: absolute;
+  right: 7px;
+  top: 8px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #08705a;
+  color: #fff;
+  font-size: 8px;
+}
+.selected-day-card {
+  align-self: start;
+}
+.selected-day-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+  border-bottom: 1px solid #e5ece9;
+}
+.selected-day-card > header span {
+  color: #08705a;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+}
+.selected-day-card > header h2 {
+  margin: 4px 0 1px;
+  color: #173d33;
+  font:
+    700 21px Georgia,
+    serif;
+}
+.selected-day-card > header p {
+  margin: 0;
+  color: #71817c;
+  font-size: 10px;
+}
+.selected-day-card .add-button {
+  height: 36px !important;
+  padding: 0 11px !important;
+  font-size: 10px !important;
+}
+.selected-day-card .add-button svg {
+  width: 14px;
+}
+.public-holiday-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 14px 0;
+  padding: 10px;
+  border-radius: 9px;
+  background: #fff4d8;
+  color: #875c13;
+  font-size: 10px;
+  font-weight: 750;
+}
+.public-holiday-label svg {
+  width: 16px;
+}
+.selected-day-events {
+  padding: 8px 0;
+}
+.selected-day-events .meeting {
+  border-bottom: 1px solid #edf1ef;
+}
+.selected-day-card > .info-note {
+  margin: 10px 14px 16px;
+}
+.mobile-primary-nav {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
+@media (max-width: 900px) {
+  .month-calendar-layout {
+    grid-template-columns: 1fr;
+  }
+  .selected-day-card {
+    order: 2;
+  }
+}
+@media (max-width: 620px) {
+  .mobile-primary-nav {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+  .mobile-primary-nav button {
+    font-size: 7px !important;
+  }
+  .mobile-primary-nav button svg {
+    width: 17px !important;
+    height: 17px !important;
+  }
+  .month-calendar-layout {
+    gap: 11px;
+  }
+  .month-calendar-head {
+    padding: 14px;
+  }
+  .month-calendar-head h2 {
+    font-size: 20px;
+  }
+  .month-weekdays,
+  .month-grid {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  .month-grid > button {
+    min-height: 62px;
+    padding: 6px 4px;
+  }
+  .month-grid > button > small {
+    max-height: 18px;
+    font-size: 6px;
+  }
+  .month-grid > button > b {
+    right: 3px;
+    top: 4px;
+    min-width: 15px;
+    height: 15px;
+    font-size: 7px;
+  }
+  .selected-day-card > header {
+    align-items: flex-start;
+    padding: 14px;
+  }
+  .selected-day-card .add-button {
+    font-size: 0 !important;
+  }
+  .selected-day-card .add-button svg {
+    margin: 0 !important;
+  }
+}
+
 .hidden-task-trigger {
   display: none;
 }

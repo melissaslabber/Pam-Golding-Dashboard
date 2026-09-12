@@ -13,6 +13,8 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardCheck,
   Clock3,
   FileText,
@@ -87,21 +89,35 @@ type Task = {
   archivedAt?: string;
 };
 const taskUrgencyRank = (task: Task) => {
-  if (task.priority === "Urgent" || task.due === "Overdue") return 0;
-  if (task.due === "Today") return 1;
-  if (task.priority === "High" || task.due === "Tomorrow") return 2;
+  const due = taskDueState(task.due);
+  if (task.priority === "Urgent" || due === "Overdue") return 0;
+  if (due === "Today") return 1;
+  if (task.priority === "High" || due === "Tomorrow") return 2;
   if (task.priority === "Normal") return 3;
   return 4;
 };
 const taskDisplayPriority = (task: Task) => {
-  if (task.priority === "Urgent" || task.due === "Overdue") return "urgent";
-  if (
-    task.priority === "High" ||
-    task.due === "Today" ||
-    task.due === "Tomorrow"
-  )
+  const due = taskDueState(task.due);
+  if (task.priority === "Urgent" || due === "Overdue") return "urgent";
+  if (task.priority === "High" || due === "Today" || due === "Tomorrow")
     return "high";
   return task.priority.toLowerCase();
+};
+const taskDueState = (due: string) => {
+  if (["Overdue", "Today", "Tomorrow", "This week"].includes(due)) return due;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return "Future";
+  if (due < dateKey(0)) return "Overdue";
+  if (due === dateKey(0)) return "Today";
+  if (due === dateKey(1)) return "Tomorrow";
+  return "Future";
+};
+const taskDueLabel = (due: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(due) ? formatDate(due) : due;
+const taskDateInputValue = (due: string) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(due)) return due;
+  if (due === "Today" || due === "Overdue") return dateKey(0);
+  if (due === "Tomorrow") return dateKey(1);
+  return "";
 };
 type User = {
   name: string;
@@ -356,7 +372,7 @@ export default function Home() {
     title: "",
     property: "",
     assignee: "Melissa",
-    due: "Today",
+    due: dateKey(0),
     time: "09:00",
     priority: "Normal" as Priority,
     notes: "",
@@ -1047,7 +1063,7 @@ export default function Home() {
       title: "",
       property: "",
       assignee: current?.short || "Melissa",
-      due: "Today",
+      due: dateKey(0),
       time: "09:00",
       priority: "Normal",
       notes: "",
@@ -1364,7 +1380,7 @@ export default function Home() {
   const isManager = view === "manager";
   return (
     <main className="app-shell" data-release="complete-v7">
-      <style>{`@media(max-width:620px){.workspace>header{display:flex!important;position:sticky!important;top:0!important;z-index:30!important;height:70px!important;padding:0 13px!important;background:#fff!important}.header-logo{display:block!important;width:38px!important;height:38px!important;object-fit:cover!important;border-radius:9px!important}.mobile-primary-nav{position:fixed!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;z-index:999!important;background:#fff!important;border-top:1px solid #d4e4de!important;padding:5px 5px calc(6px + env(safe-area-inset-bottom))!important}.content{padding-bottom:110px!important}}`}</style>
+      <style>{`@media(max-width:620px){.workspace>header{display:flex!important;position:sticky!important;top:0!important;z-index:30!important;height:70px!important;padding:0 13px!important;background:#fff!important}.header-logo{display:block!important;width:38px!important;height:38px!important;object-fit:cover!important;border-radius:9px!important}.mobile-primary-nav{position:fixed!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;z-index:999!important;background:#fff!important;border-top:1px solid #d4e4de!important;padding:5px 5px calc(6px + env(safe-area-inset-bottom))!important}.content{padding-bottom:110px!important}}`}</style>
       <aside className={`side-panel ${mobileNav ? "side-open" : ""}`}>
         <div className="brand">
           <img
@@ -1562,6 +1578,7 @@ export default function Home() {
         <nav className="mobile-primary-nav" aria-label="Main sections">
           {[
             ["Today", LayoutDashboard],
+            ["Appointments", CalendarDays],
             ["Tasks & To-do", ListTodo],
             ["Maintenance", Wrench],
             ["Lease Renewals", FileText],
@@ -1594,9 +1611,11 @@ export default function Home() {
                 <span>
                   {label === "Tasks & To-do"
                     ? "Tasks"
-                    : label === "Lease Renewals"
-                      ? "Renewals"
-                      : label}
+                    : label === "Appointments"
+                      ? "Meetings"
+                      : label === "Lease Renewals"
+                        ? "Renewals"
+                        : label}
                 </span>
               </button>
             );
@@ -1703,6 +1722,7 @@ export default function Home() {
                 connect: connectGoogleCalendar,
                 refresh: refreshGoogleCalendar,
                 disconnect: disconnectGoogleCalendar,
+                openAdd: () => setAppointmentOpen(true),
               }}
             />
           )}
@@ -1729,6 +1749,7 @@ export default function Home() {
                 connect: connectGoogleCalendar,
                 refresh: refreshGoogleCalendar,
                 disconnect: disconnectGoogleCalendar,
+                openAdd: () => setAppointmentOpen(true),
               }}
             />
           )}
@@ -1949,6 +1970,60 @@ function dateLabel(date: string) {
     day: "numeric",
     month: "short",
   }).format(new Date(`${date}T12:00:00`));
+}
+function easterSunday(year: number) {
+  const a = year % 19,
+    b = Math.floor(year / 100),
+    c = year % 100,
+    d = Math.floor(b / 4),
+    e = b % 4,
+    f = Math.floor((b + 8) / 25),
+    g = Math.floor((b - f + 1) / 3),
+    h = (19 * a + b - d - g + 15) % 30,
+    i = Math.floor(c / 4),
+    k = c % 4,
+    l = (32 + 2 * e + 2 * i - h - k) % 7,
+    m = Math.floor((a + 11 * h + 22 * l) / 451),
+    month = Math.floor((h + l - 7 * m + 114) / 31),
+    day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day, 12);
+}
+function southAfricanPublicHolidays(year: number) {
+  const easter = easterSunday(year),
+    relative = (offset: number) => {
+      const value = new Date(easter);
+      value.setDate(value.getDate() + offset);
+      return value.toLocaleDateString("en-CA");
+    },
+    holidays: Array<[string, string]> = [
+      [`${year}-01-01`, "New Year’s Day"],
+      [`${year}-03-21`, "Human Rights Day"],
+      [relative(-2), "Good Friday"],
+      [relative(1), "Family Day"],
+      [`${year}-04-27`, "Freedom Day"],
+      [`${year}-05-01`, "Workers’ Day"],
+      [`${year}-06-16`, "Youth Day"],
+      [`${year}-08-09`, "National Women’s Day"],
+      [`${year}-09-24`, "Heritage Day"],
+      [`${year}-12-16`, "Day of Reconciliation"],
+      [`${year}-12-25`, "Christmas Day"],
+      [`${year}-12-26`, "Day of Goodwill"],
+    ],
+    result = new Map(holidays);
+  holidays.forEach(([date, name]) => {
+    const day = new Date(`${date}T12:00:00`);
+    if (day.getDay() === 0) {
+      day.setDate(day.getDate() + 1);
+      const observed = day.toLocaleDateString("en-CA");
+      result.set(
+        observed,
+        result.has(observed)
+          ? `${result.get(observed)} · ${name} observed`
+          : `${name} observed`,
+      );
+    }
+  });
+  return result;
 }
 function appointmentToGoogleEvent(
   a: Pick<
@@ -2396,15 +2471,12 @@ function TaskDialog({ dialog, setDialog, form, setForm, addTask, users }: any) {
             </select>
           </label>
           <label>
-            Due
-            <select
+            Due date
+            <input
+              type="date"
               value={form.due}
               onChange={(e: any) => setForm({ ...form, due: e.target.value })}
-            >
-              <option>Today</option>
-              <option>Tomorrow</option>
-              <option>This week</option>
-            </select>
+            />
           </label>
           <label>
             Time
@@ -2797,15 +2869,17 @@ function TaskRows({
                 <div className="task-top">
                   <h3>{task.title}</h3>
                   {(task.priority !== "Normal" ||
-                    task.due === "Today" ||
-                    task.due === "Tomorrow" ||
-                    task.due === "Overdue") && (
+                    ["Today", "Tomorrow", "Overdue"].includes(
+                      taskDueState(task.due),
+                    )) && (
                     <span className={`priority ${taskDisplayPriority(task)}`}>
-                      {task.due === "Overdue"
+                      {taskDueState(task.due) === "Overdue"
                         ? "Urgent · overdue"
                         : task.priority === "Normal" &&
-                            (task.due === "Today" || task.due === "Tomorrow")
-                          ? `Due ${task.due.toLowerCase()}`
+                            ["Today", "Tomorrow"].includes(
+                              taskDueState(task.due),
+                            )
+                          ? `Due ${taskDueState(task.due).toLowerCase()}`
                           : task.priority}
                     </span>
                   )}
@@ -2819,9 +2893,13 @@ function TaskRows({
                   <span className="person-pill">
                     {task.assignee.slice(0, 1)} · {task.assignee}
                   </span>
-                  <span className={task.due === "Overdue" ? "overdue" : ""}>
+                  <span
+                    className={
+                      taskDueState(task.due) === "Overdue" ? "overdue" : ""
+                    }
+                  >
                     <CalendarDays />
-                    {task.due}
+                    {taskDueLabel(task.due)}
                   </span>
                   <span>
                     <Clock3 />
@@ -2919,18 +2997,14 @@ function TaskRows({
                 />
               </label>
               <label>
-                Due
-                <select
-                  value={editing.due}
+                Due date
+                <input
+                  type="date"
+                  value={taskDateInputValue(editing.due)}
                   onChange={(e) =>
                     setEditing({ ...editing, due: e.target.value })
                   }
-                >
-                  <option>Overdue</option>
-                  <option>Today</option>
-                  <option>Tomorrow</option>
-                  <option>This week</option>
-                </select>
+                />
               </label>
               <label>
                 Time
@@ -3136,9 +3210,12 @@ function TodayOverviewDetailed({
       icon: ListTodo,
       items: openTasks.map((item: Task) => ({
         title: item.title,
-        meta: [item.property, item.due, item.time].filter(Boolean).join(" · "),
+        meta: [item.property, taskDueLabel(item.due), item.time]
+          .filter(Boolean)
+          .join(" · "),
         priority: taskDisplayPriority(item),
-        urgent: item.priority === "Urgent" || item.due === "Overdue",
+        urgent:
+          item.priority === "Urgent" || taskDueState(item.due) === "Overdue",
       })),
       empty: "No outstanding tasks",
     },
@@ -3278,7 +3355,8 @@ function TodayOverview({
       section: "Tasks & To-do",
       icon: ListTodo,
       tone: openTasks.some(
-        (item: Task) => item.priority === "Urgent" || item.due === "Overdue",
+        (item: Task) =>
+          item.priority === "Urgent" || taskDueState(item.due) === "Overdue",
       )
         ? "urgent"
         : "",
@@ -3410,7 +3488,8 @@ function MorningBriefing({
     priorityTasks = tasks.filter(
       (t: Task) =>
         !t.done &&
-        (t.priority === "Urgent" || t.due === "Today" || t.due === "Overdue"),
+        (t.priority === "Urgent" ||
+          ["Today", "Overdue"].includes(taskDueState(t.due))),
     ),
     urgentMaintenance = scopedMaintenance.filter(
       (m: Maintenance) => m.priority === "Urgent",
@@ -3893,90 +3972,126 @@ function CalendarView({
   onDelete,
   calendarControls,
 }: any) {
-  const [history, setHistory] = useState(false),
-    now = new Date(),
-    shownAppointments = appointments.filter((item: Appointment) => {
-      const day =
-          item.date === "Today"
-            ? dateKey(0)
-            : item.date === "Tomorrow"
-              ? dateKey(1)
-              : item.date,
-        eventTime = new Date(`${day}T${item.time || "23:59"}:00`);
-      return history ? eventTime < now : eventTime >= now;
-    });
-  const dates = [
-    ...new Set([
-      ...(history ? [] : [dateKey(0), dateKey(1)]),
-      ...shownAppointments.map((a: Appointment) => a.date),
-    ]),
-  ].sort();
+  const today = new Date(),
+    [month, setMonth] = useState(
+      new Date(today.getFullYear(), today.getMonth(), 1),
+    ),
+    [selectedDate, setSelectedDate] = useState(dateKey(0)),
+    monthStart = new Date(month.getFullYear(), month.getMonth(), 1),
+    gridStart = new Date(monthStart),
+    holidays = southAfricanPublicHolidays(month.getFullYear());
+  gridStart.setDate(gridStart.getDate() - gridStart.getDay());
+  const calendarDays = Array.from({ length: 42 }, (_, index) => {
+      const value = new Date(gridStart);
+      value.setDate(value.getDate() + index);
+      return value;
+    }),
+    appointmentDate = (item: Appointment) =>
+      item.date === "Today"
+        ? dateKey(0)
+        : item.date === "Tomorrow"
+          ? dateKey(1)
+          : item.date,
+    dayAppointments = appointments
+      .filter((item: Appointment) => appointmentDate(item) === selectedDate)
+      .sort((a: Appointment, b: Appointment) => a.time.localeCompare(b.time)),
+    selectedHoliday = holidays.get(selectedDate);
+  const moveMonth = (offset: number) => {
+    const next = new Date(month.getFullYear(), month.getMonth() + offset, 1);
+    setMonth(next);
+    setSelectedDate(next.toLocaleDateString("en-CA"));
+  };
   return (
-    <>
-      <div className="section-history-bar">
-        <HistorySwitch history={history} setHistory={setHistory} />
-      </div>
-      {!history && (
-        <div className="appointments-today">
-          <CalendarCard
-            appointments={shownAppointments}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            calendarControls={calendarControls}
-          />
-        </div>
-      )}
-      <div className="calendar-layout">
-        <section className="week-card">
-          <div className="week-head">
-            <span />
-            <h2>{history ? "Past meetings" : "Upcoming meetings"}</h2>
-            <span />
+    <div className="month-calendar-layout">
+      <section className="month-calendar-card">
+        <header className="month-calendar-head">
+          <button onClick={() => moveMonth(-1)} aria-label="Previous month">
+            <ChevronLeft />
+          </button>
+          <div>
+            <h2>
+              {new Intl.DateTimeFormat("en-ZA", {
+                month: "long",
+                year: "numeric",
+              }).format(month)}
+            </h2>
+            <button
+              className="calendar-today-button"
+              onClick={() => {
+                setMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                setSelectedDate(dateKey(0));
+              }}
+            >
+              Today
+            </button>
           </div>
-          {dates.map((d) => (
-            <div className="day-row" key={d}>
-              <strong>{dateLabel(d)}</strong>
-              <div>
-                {shownAppointments.filter(
-                  (a: Appointment) =>
-                    a.date === d ||
-                    (d === dateKey(0) && a.date === "Today") ||
-                    (d === dateKey(1) && a.date === "Tomorrow"),
-                ).length ? (
-                  shownAppointments
-                    .filter(
-                      (a: Appointment) =>
-                        a.date === d ||
-                        (d === dateKey(0) && a.date === "Today") ||
-                        (d === dateKey(1) && a.date === "Tomorrow"),
-                    )
-                    .sort((a: Appointment, b: Appointment) =>
-                      a.time.localeCompare(b.time),
-                    )
-                    .map((a: Appointment) => (
-                      <Meeting
-                        key={a.id}
-                        appointment={a}
-                        onEdit={onEdit}
-                        onDelete={onDelete}
-                      />
-                    ))
-                ) : (
-                  <p className="no-events">No meetings scheduled</p>
-                )}
-              </div>
-            </div>
+          <button onClick={() => moveMonth(1)} aria-label="Next month">
+            <ChevronRight />
+          </button>
+        </header>
+        <div className="month-weekdays">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            <span key={day}>{day}</span>
           ))}
-        </section>
-        <aside>
-          <p className="info-note">
-            {manager
-              ? "Each person connects their own Google Calendar in My Profile."
-              : "Google meetings are imported automatically and appointments created here are saved directly to Google."}
+        </div>
+        <div className="month-grid">
+          {calendarDays.map((day) => {
+            const key = day.toLocaleDateString("en-CA"),
+              events = appointments.filter(
+                (item: Appointment) => appointmentDate(item) === key,
+              ),
+              holiday = southAfricanPublicHolidays(day.getFullYear()).get(key);
+            return (
+              <button
+                key={key}
+                className={`${day.getMonth() !== month.getMonth() ? "outside" : ""} ${key === dateKey(0) ? "today" : ""} ${key === selectedDate ? "selected" : ""} ${holiday ? "holiday" : ""}`}
+                onClick={() => setSelectedDate(key)}
+              >
+                <strong>{day.getDate()}</strong>
+                {holiday && <small>{holiday}</small>}
+                {events.length > 0 && <b>{events.length}</b>}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+      <section className="selected-day-card">
+        <header>
+          <div>
+            <span>SELECTED DAY</span>
+            <h2>{dateLabel(selectedDate)}</h2>
+            <p>{formatDate(selectedDate)}</p>
+          </div>
+          <Button className="add-button" onClick={calendarControls.openAdd}>
+            <Plus /> Add appointment
+          </Button>
+        </header>
+        {selectedHoliday && (
+          <p className="public-holiday-label">
+            <CalendarDays /> South African public holiday · {selectedHoliday}
           </p>
-        </aside>
-      </div>
-    </>
+        )}
+        <div className="selected-day-events">
+          {dayAppointments.length ? (
+            dayAppointments.map((appointment: Appointment) => (
+              <Meeting
+                key={appointment.id}
+                appointment={appointment}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))
+          ) : (
+            <p className="no-events">No appointments scheduled for this day.</p>
+          )}
+        </div>
+        <p className="info-note">
+          {manager
+            ? "Each person connects their own Google Calendar in Settings."
+            : "Google appointments sync automatically every five minutes."}
+        </p>
+      </section>
+    </div>
   );
 }
 function CalendarConnection({ controls }: any) {
@@ -4499,7 +4614,7 @@ function TeamView({
             <strong>
               {
                 personalTasks.filter(
-                  (t: Task) => t.due === "Overdue" && !t.done,
+                  (t: Task) => taskDueState(t.due) === "Overdue" && !t.done,
                 ).length
               }
             </strong>
@@ -6014,7 +6129,11 @@ function ReportsView({
         <article>
           <p>Overdue</p>
           <strong className="red-number">
-            {tasks.filter((t: Task) => t.due === "Overdue" && !t.done).length}
+            {
+              tasks.filter(
+                (t: Task) => taskDueState(t.due) === "Overdue" && !t.done,
+              ).length
+            }
           </strong>
           <small>Needs manager attention</small>
         </article>
