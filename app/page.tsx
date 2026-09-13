@@ -1,2 +1,2 @@
-// Pam Golding Rentals Dashboard V37 — corrected AI adviser mobile layout
-export { default } from "./organizer-complete-v37";
+// Pam Golding Rentals Dashboard V39 — editable pastel task and appointment colours
+export { default } from "./organizer-complete-v39";
