@@ -1,2 +1,2 @@
-// Pam Golding Rentals Dashboard V42 — premium category allocation styling
-export { default } from "./organizer-complete-v42";
+// Pam Golding Rentals Dashboard V43 — refined muted colour system
+export { default } from "./organizer-complete-v43";
