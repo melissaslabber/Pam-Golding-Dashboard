@@ -35,6 +35,31 @@ export async function claimStaffAccess(code: string): Promise<SupabaseProfile> {
   return profile as SupabaseProfile;
 }
 
+export async function createStaffActivationToken(profileId: string, accessCode: string) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data, error } = await supabase.rpc("manager_create_activation_token", {
+    target_profile_id: profileId,
+    staff_access_code: accessCode,
+  });
+  if (error) throw error;
+  return String(data || "");
+}
+
+export async function claimStaffActivationToken(token: string): Promise<SupabaseProfile> {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) {
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) throw error;
+  }
+  const { data, error } = await supabase.rpc("claim_activation_token", {
+    activation_token: token,
+  });
+  if (error) throw error;
+  if (!data) throw new Error("This activation link is invalid or has expired.");
+  return data as SupabaseProfile;
+}
+
 export async function restoreStaffAccess(): Promise<SupabaseProfile | null> {
   if (!supabase) return null;
   const { data: sessionData } = await supabase.auth.getSession();
