@@ -1,2 +1,2 @@
-// Pam Golding Rentals Dashboard V43 — refined muted colour system
-export { default } from "./organizer-complete-v43";
+// Pam Golding Rentals Dashboard V44 — luxury neutral task and calendar styling
+export { default } from "./organizer-complete-v44";
