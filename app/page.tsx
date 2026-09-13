@@ -1,2 +1,2 @@
-// Pam Golding Rentals Dashboard V44 — luxury neutral task and calendar styling
-export { default } from "./organizer-complete-v44";
+// Pam Golding Rentals Dashboard V45 — clean pastel category accents
+export { default } from "./organizer-complete-v45";
