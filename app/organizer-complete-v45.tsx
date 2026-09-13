@@ -832,10 +832,9 @@ export default function Home() {
     ? users.filter((user) => profileAssignees.includes(user.short) ||
         (user.profileId && isConnected(staffConnections, current.profileId, user.profileId)))
     : [];
-  const ownNotifications =
-    current?.role === "Manager"
-      ? []
-      : notifications.filter((n) => n.recipient === current?.short);
+  const ownNotifications = notifications.filter(
+    (n) => n.recipient === current?.short,
+  );
   const unreadNotifications = ownNotifications.filter((n) => !n.read).length;
   useEffect(() => {
     if (!current) return;
@@ -915,10 +914,6 @@ export default function Home() {
   };
   useEffect(() => {
     if (!ready || !current?.profileId || !supabaseConfigured) return;
-    if (current.role === "Manager") {
-      setNotifications([]);
-      return;
-    }
     const refresh = async () => {
       try {
         const rows = await loadMyNotifications();
@@ -945,10 +940,11 @@ export default function Home() {
     message: string,
     section: AppNotification["section"],
     reminderKey?: string,
+    includeManagers = false,
   ) => {
     if (!current) return;
     const eligible = recipients.filter(
-      (u) => u.role !== "Manager" && u.profileId && u.teamId,
+      (u) => (includeManagers || u.role !== "Manager") && u.profileId && u.teamId,
     );
     if (!eligible.length) return;
     if (supabaseConfigured) {
@@ -983,15 +979,15 @@ export default function Home() {
       (r) =>
         (profileAssignees.includes(r.assigned) || Boolean(current?.profileId && r.sharedWithProfileIds?.includes(current.profileId))) &&
         !renewalComplete(r) &&
-        r.nextFollowUpDate <= dateKey(0),
+        (r.nextFollowUpDate <= dateKey(0) || daysUntil(r.leaseEndDate) <= 21),
     );
     for (const r of due) {
       const key = `renewal-${r.id}-${r.nextFollowUpDate}-${current.short}`;
       if (!notifications.some((n) => n.reminderKey === key))
         deliverNotification(
           [current],
-          daysUntil(r.leaseEndDate) <= 31
-            ? `VERY URGENT: ${r.property} expires within one month and is not finalised. Finalise ASAP.`
+          daysUntil(r.leaseEndDate) <= 21
+            ? `VERY URGENT: ${r.property} expires within three weeks and is not finalised. Finalise ASAP.`
             : `Follow up the lease renewal for ${r.property}.`,
           "Lease Renewals",
           key,
@@ -1006,20 +1002,63 @@ export default function Home() {
     notifications.length,
   ]);
   useEffect(() => {
+    if (!ready || !current || current.role !== "Manager") return;
+    const managers = users.filter(
+      (user: User) => user.role === "Manager" && user.profileId && user.teamId,
+    );
+    if (!managers.length) return;
+    for (const renewal of renewals.filter(
+      (item: LeaseRenewal) =>
+        !renewalComplete(item) && daysUntil(item.leaseEndDate) <= 21,
+    )) {
+      const key = `manager-renewal-21-${renewal.id}-${renewal.leaseEndDate}`;
+      if (!notifications.some((item) => item.reminderKey === key))
+        deliverNotification(
+          managers,
+          `VERY URGENT: ${renewal.property} expires within three weeks and has not been finalised. Please follow up and finalise ASAP.`,
+          "Lease Renewals",
+          key,
+          true,
+        );
+    }
+    for (const lease of newLeases.filter(
+      (item: NewLease) =>
+        !newLeaseComplete(item) && daysUntil(item.occupationDate) <= 21,
+    )) {
+      const key = `manager-new-lease-21-${lease.id}-${lease.occupationDate}`;
+      if (!notifications.some((item) => item.reminderKey === key))
+        deliverNotification(
+          managers,
+          `VERY URGENT: ${lease.property} starts within three weeks and has not been finalised. Please follow up and finalise ASAP.`,
+          "New Leases",
+          key,
+          true,
+        );
+    }
+  }, [
+    ready,
+    current?.profileId,
+    current?.role,
+    renewals,
+    newLeases,
+    notifications.length,
+    users,
+  ]);
+  useEffect(() => {
     if (!ready || !current || current.role === "Manager") return;
     const due = newLeases.filter(
       (l) =>
         (profileAssignees.includes(l.assigned) || Boolean(current?.profileId && l.sharedWithProfileIds?.includes(current.profileId))) &&
         !workflowComplete(newLeaseStages, l.stage) &&
-        l.nextFollowUpDate <= dateKey(0),
+        (l.nextFollowUpDate <= dateKey(0) || daysUntil(l.occupationDate) <= 21),
     );
     for (const l of due) {
       const key = `new-lease-${l.id}-${l.nextFollowUpDate}-${current.short}`;
       if (!notifications.some((n) => n.reminderKey === key))
         deliverNotification(
           [current],
-          daysUntil(l.occupationDate) <= 14
-            ? `VERY URGENT: ${l.property} occupation is within two weeks. Finalise and upload to WCU ASAP.`
+          daysUntil(l.occupationDate) <= 21
+            ? `VERY URGENT: ${l.property} occupation is within three weeks. Finalise ASAP.`
             : `Follow up the new lease for ${l.property}.`,
           "New Leases",
           key,
@@ -1762,8 +1801,7 @@ export default function Home() {
               </button>
             )}
           </div>
-          {current.role !== "Manager" && (
-            <div className="notification-wrap">
+          <div className="notification-wrap">
               <button
                 className="icon-button"
                 aria-label="Notifications"
@@ -1809,8 +1847,7 @@ export default function Home() {
                   )}
                 </div>
               )}
-            </div>
-          )}
+          </div>
           <button
             className="icon-button top-more"
             aria-label="More options"
@@ -3697,10 +3734,10 @@ function TodayLeaseOverview({
           )
     ).filter((l: NewLease) => !workflowComplete(newLeaseStages, l.stage)),
     renewalUrgent = rs.filter(
-      (r: LeaseRenewal) => daysUntil(r.leaseEndDate) <= 31,
+      (r: LeaseRenewal) => daysUntil(r.leaseEndDate) <= 21,
     ).length,
     leaseUrgent = ls.filter(
-      (l: NewLease) => daysUntil(l.occupationDate) <= 14,
+      (l: NewLease) => daysUntil(l.occupationDate) <= 21,
     ).length;
   return (
     <section className="today-lease-overview">
@@ -3873,7 +3910,7 @@ function TodayOverviewDetailed({
       items: openRenewals.map((item: LeaseRenewal) => ({
         title: item.property,
         meta: `Expires ${formatDate(item.leaseEndDate)}`,
-        urgent: daysUntil(item.leaseEndDate) <= 31,
+        urgent: daysUntil(item.leaseEndDate) <= 21,
       })),
       empty: "No active lease renewals",
     },
@@ -3885,7 +3922,7 @@ function TodayOverviewDetailed({
       items: openLeases.map((item: NewLease) => ({
         title: item.property,
         meta: `Starts ${formatDate(item.occupationDate)}`,
-        urgent: daysUntil(item.occupationDate) <= 14,
+        urgent: daysUntil(item.occupationDate) <= 21,
       })),
       empty: "No active new leases",
     },
@@ -4132,11 +4169,11 @@ function MorningBriefing({
     ).length,
     urgentRenewals = scopedRenewals.filter(
       (r: LeaseRenewal) =>
-        daysUntil(r.leaseEndDate) <= 31 || r.nextFollowUpDate <= dateKey(0),
+        daysUntil(r.leaseEndDate) <= 21 || r.nextFollowUpDate <= dateKey(0),
     ).length,
     urgentLeases = scopedLeases.filter(
       (l: NewLease) =>
-        daysUntil(l.occupationDate) <= 14 || l.nextFollowUpDate <= dateKey(0),
+        daysUntil(l.occupationDate) <= 21 || l.nextFollowUpDate <= dateKey(0),
     ).length,
     totalAttention =
       priorityTasks.length + urgentMaintenance + urgentRenewals + urgentLeases;
@@ -4997,7 +5034,7 @@ function RenewalsView({
                 ? 1
                 : 0),
             totalActions = requiredActions.length + (r.ficaChanged ? 1 : 0),
-            veryUrgent = daysUntil(r.leaseEndDate) <= 31,
+            veryUrgent = daysUntil(r.leaseEndDate) <= 21,
             due = r.nextFollowUpDate <= dateKey(0) || veryUrgent;
           return (
             <article
@@ -7208,7 +7245,7 @@ function PropertiesView({
       const p = get(r.property);
       p.renewals++;
       p.urgent =
-        p.urgent || (!renewalComplete(r) && daysUntil(r.leaseEndDate) <= 31);
+        p.urgent || (!renewalComplete(r) && daysUntil(r.leaseEndDate) <= 21);
     });
   newLeases
     .filter((l: NewLease) => l.property && allowed(l.assigned))
@@ -7218,7 +7255,7 @@ function PropertiesView({
       p.urgent =
         p.urgent ||
         (!workflowComplete(newLeaseStages, l.stage) &&
-          daysUntil(l.occupationDate) <= 14);
+          daysUntil(l.occupationDate) <= 21);
     });
   const rows = [...properties.entries()].sort(
     (a, b) =>
@@ -7663,7 +7700,7 @@ function NewLeasesChecklistView({
             {
               scoped.filter(
                 (l: NewLease) =>
-                  !newLeaseComplete(l) && daysUntil(l.occupationDate) <= 14,
+                  !newLeaseComplete(l) && daysUntil(l.occupationDate) <= 21,
               ).length
             }
           </strong>
@@ -7681,7 +7718,7 @@ function NewLeasesChecklistView({
             completedActions.includes(action),
           ).length,
           completed = completedCount === newLeaseStages.length,
-          urgent = !completed && daysUntil(l.occupationDate) <= 14;
+          urgent = !completed && daysUntil(l.occupationDate) <= 21;
         return (
           <article
             className={`renewal-card ${urgent ? "followup-due" : ""} ${completed ? "completed" : ""}`}

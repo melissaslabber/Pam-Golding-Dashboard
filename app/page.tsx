@@ -1,2 +1,2 @@
-// Pam Golding Rentals Dashboard V46 — prominent urgent task flags
+// Pam Golding Rentals Dashboard V48 — manager lease escalation alerts
 export { default } from "./organizer-complete-v45";
